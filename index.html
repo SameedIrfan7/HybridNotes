@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#070505" />
+    <title>HybridNotes — Private-by-Default AI Study Notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="bg-backdrop" aria-hidden="true"></div>
+
+    <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+      Offline mode — AI runs strictly on-device with zero mobile data used.
+    </div>
+
+    <nav class="top-nav glass-panel" aria-label="Primary navigation">
+      <div class="brand-group">
+        <button
+          id="mobile-menu-btn"
+          type="button"
+          class="pill-btn mobile-only-btn"
+          aria-label="Open notes drawer"
+          aria-expanded="false"
+        >
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 6h14M3 10h14M3 14h14" stroke-linecap="round" />
+          </svg>
+        </button>
+        <img src="/icon.svg" alt="" class="brand-logo" width="22" height="22" />
+        <span class="brand">HybridNotes</span>
+      </div>
+
+      <div class="nav-tabs" role="tablist" aria-label="App views">
+        <button
+          id="nav-home-btn"
+          type="button"
+          class="pill-btn nav-tab active"
+          role="tab"
+          aria-selected="true"
+        >
+          Home
+        </button>
+        <button
+          id="nav-workspace-btn"
+          type="button"
+          class="pill-btn nav-tab"
+          role="tab"
+          aria-selected="false"
+        >
+          Workspace
+        </button>
+      </div>
+
+      <div class="nav-right">
+        <span id="nano-status-pill" class="nano-status glass-pill" aria-live="polite">
+          Checking Nano…
+        </span>
+        <label class="sim-offline-pill glass-pill" for="sim-offline-toggle">
+          <input id="sim-offline-toggle" class="switch-input" type="checkbox" />
+          <span>Simulate Offline</span>
+        </label>
+      </div>
+    </nav>
+
+    <section id="home-view" class="home-view" aria-label="About HybridNotes">
+      <header class="landing-hero">
+        <span class="hero-pill glass-pill">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>Hybrid AI Study Notes · Works Offline</span>
+        </span>
+        <h1 class="landing-title">Study notes that know when to stay on your device.</h1>
+        <p class="landing-sub">
+          Built for students on patchy Wi-Fi and limited mobile data. Summaries, flashcards, and
+          Private notes run locally in Chrome; deep analysis uses the cloud with sensitive
+          identifiers masked first.
+        </p>
+        <div class="landing-cta-row">
+          <button id="launch-workspace-btn" type="button" class="btn-primary pill-btn btn-lg">
+            <span>Open Notes Workspace</span>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 10h12M11 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <a href="#how-it-works" class="pill-btn btn-lg">How It Works</a>
+        </div>
+
+        <div class="hero-mockup glass-panel reveal-drop" aria-label="HybridNotes live routing preview">
+          <div class="mockup-bar">
+            <span class="mockup-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="mono mockup-url">hybridnotes · PWA</span>
+            <span class="badge badge-on-device">On-device Ready</span>
+          </div>
+          <div class="mockup-grid">
+            <div class="mockup-pane glass-subpanel">
+              <div class="mockup-label mono">NOTE · 197 CHARS · PRIVATE OFF</div>
+              <p class="mockup-text">
+                Cellular respiration converts glucose into ATP across glycolysis, the Krebs cycle,
+                and oxidative phosphorylation.
+              </p>
+              <div class="mockup-chips">
+                <span class="badge badge-on-device">Summarize</span>
+                <span class="badge badge-on-device">Quiz Me</span>
+              </div>
+            </div>
+            <div class="mockup-pane glass-subpanel">
+              <div class="mockup-label-row">
+                <span class="badge badge-on-device">On-device</span>
+                <span class="mono mockup-ms">280 ms · 0 KB used</span>
+              </div>
+              <p class="mockup-text">
+                Short note (&lt; 1500 chars): routed locally to Chrome Gemini Nano—no mobile data
+                used.
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="spectrum-bar reveal-drop" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <section id="how-it-works" class="bento-section">
+        <div class="bento-header reveal-drop">
+          <div class="flow-pills" aria-label="Hybrid workflow steps">
+            <span class="pill-btn flow-pill active">1. Write Locally</span>
+            <span class="pill-btn flow-pill">2. Mask Identifiers</span>
+            <span class="pill-btn flow-pill">3. Smart Route</span>
+            <span class="pill-btn flow-pill">4. See Every Metric</span>
+          </div>
+          <h2 class="bento-heading">How HybridNotes handles your notes.</h2>
+        </div>
+
+        <div class="bento-grid">
+          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 0ms">
+            <div class="bento-preview cream-grid-surface">
+              <div class="mini-card cream-mini">
+                <div class="mini-row">
+                  <span class="badge badge-cream-red">Masked Locally</span>
+                  <span class="mono">Before Cloud</span>
+                </div>
+                <div class="mini-code mono">
+                  sara@uni.edu → <span class="hl-red">[REDACTED_EMAIL]</span><br />
+                  ID 20264819 → <span class="hl-red">[REDACTED_ID]</span>
+                </div>
+              </div>
+            </div>
+            <h3>Identifier Redaction</h3>
+            <p>Emails, phone numbers, and student IDs are masked locally before any cloud request, with a live privacy report.</p>
+          </article>
+
+          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 90ms">
+            <div class="bento-preview cream-grid-surface">
+              <div class="mini-card cream-mini">
+                <div class="mini-row">
+                  <span class="badge badge-cream-dark">Map-Reduce</span>
+                  <span class="mono">1,200 chars/chunk</span>
+                </div>
+                <div class="mini-code mono">
+                  chunk[1/3] → Gemini Nano ✓<br />
+                  chunk[2/3] → Gemini Nano ✓<br />
+                  merged locally offline
+                </div>
+              </div>
+            </div>
+            <h3>Offline Map-Reduce</h3>
+            <p>Long lectures marked Private or run offline split into 1,200-char chunks and summarize locally on Nano.</p>
+          </article>
+
+          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 180ms">
+            <div class="bento-preview cream-grid-surface">
+              <div class="mini-card cream-mini">
+                <div class="mini-row">
+                  <span class="badge badge-cream-red">Remote Config</span>
+                  <span class="mono">Live Threshold</span>
+                </div>
+                <div class="mini-code mono">
+                  on_device_max_chars: <span class="hl-red">1500</span><br />
+                  mode: <span class="hl-red">PREFER_ON_DEVICE</span><br />
+                  storage: localStorage + PWA
+                </div>
+              </div>
+            </div>
+            <h3>Live Thresholds &amp; Stats</h3>
+            <p>Tune routing thresholds via Firebase Remote Config and track cloud calls avoided plus KB saved.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="compare-strip glass-panel reveal-drop" aria-label="How HybridNotes compares">
+        <div class="compare-item">
+          <span class="compare-label">Cloud-Only Notes Apps</span>
+          <p>Send every prompt to paid servers, stop working when Wi-Fi drops, and hide data usage.</p>
+        </div>
+        <div class="compare-divider" aria-hidden="true"></div>
+        <div class="compare-item compare-item-accent">
+          <span class="compare-label hl-red-bright">HybridNotes</span>
+          <p>Runs short tasks, flashcards, and Private notes on-device, masks identifiers before cloud, and shows every route.</p>
+        </div>
+      </section>
+
+      <section class="carousel-section glass-panel reveal-drop" aria-label="Features showcase">
+        <div class="carousel-viewport">
+          <div id="carousel-track" class="carousel-track">
+            <article class="carousel-slide">
+              <div class="slide-quote">
+                <span class="badge badge-on-device">Quiz Me (Flashcards)</span>
+                <p>Turn any lecture note into 3–4 Q&amp;A flashcards on-device with zero mobile data spent.</p>
+              </div>
+              <div class="slide-stat">
+                <strong class="mono hl-green">0 KB</strong>
+                <span>mobile data for on-device study</span>
+              </div>
+            </article>
+            <article class="carousel-slide">
+              <div class="slide-quote">
+                <span class="badge badge-cloud">Identifier Redaction</span>
+                <p>Emails, phone numbers, and student IDs are masked locally with a per-result privacy report.</p>
+              </div>
+              <div class="slide-stat">
+                <strong class="mono hl-red-bright">Masked</strong>
+                <span>identifiers before cloud calls</span>
+              </div>
+            </article>
+            <article class="carousel-slide">
+              <div class="slide-quote">
+                <span class="badge badge-on-device">Installable PWA</span>
+                <p>Works offline as a desktop or mobile app with a slide-out drawer and one-click Offline Simulator.</p>
+              </div>
+              <div class="slide-stat">
+                <strong class="mono hl-green">Offline</strong>
+                <span>app shell &amp; localStorage notes</span>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="carousel-bar">
+          <div class="carousel-nav">
+            <button id="carousel-prev" type="button" class="pill-btn btn-ghost" aria-label="Previous feature">‹</button>
+            <div id="carousel-dots" class="carousel-dots" role="tablist" aria-label="Feature slides"></div>
+            <button id="carousel-next" type="button" class="pill-btn btn-ghost" aria-label="Next feature">›</button>
+          </div>
+          <button id="carousel-toggle" type="button" class="pill-btn btn-ghost" aria-label="Pause carousel">
+            Pause
+          </button>
+        </div>
+      </section>
+
+      <footer class="landing-footer reveal-drop">
+        <div class="footer-brand">
+          <img src="/icon.svg" alt="" width="18" height="18" />
+          <span>HybridNotes · Apache-2.0 Open Source · Local-first study notes</span>
+        </div>
+        <button id="footer-launch-btn" type="button" class="pill-btn btn-ghost">
+          Open Workspace →
+        </button>
+      </footer>
+    </section>
+
+    <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+
+    <div id="workspace-view" class="app-shell" hidden>
+      <aside id="sidebar" class="sidebar glass-panel" aria-label="Study notes">
+        <div class="sidebar-header">
+          <h2 class="sidebar-heading">Notes</h2>
+          <div class="sidebar-header-actions">
+            <button id="new-note-btn" type="button" class="btn-primary pill-btn">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M10 4v12M4 10h12" stroke-linecap="round" />
+              </svg>
+              <span>New</span>
+            </button>
+            <button
+              id="close-drawer-btn"
+              type="button"
+              class="pill-btn btn-ghost mobile-only-btn"
+              aria-label="Close notes drawer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <ul id="note-list" class="note-list" role="listbox" aria-label="Saved notes"></ul>
+
+        <section
+          id="stats-card"
+          class="stats-card glass-subpanel"
+          role="button"
+          tabindex="0"
+          aria-label="Open Routing Stats breakdown"
+        >
+          <div class="stats-header">
+            <h2 class="stats-title">Routing Stats <span class="stats-hint">Details ↗</span></h2>
+            <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset</button>
+          </div>
+          <p id="stats-summary" class="stats-summary">
+            0% on-device · 0 avoided · 0.0 KB saved
+          </p>
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>On-device</span>
+              <span id="stat-ondevice-meta" class="mono">0 · —</span>
+            </div>
+            <div class="stat-track">
+              <div id="stat-ondevice-bar" class="stat-fill stat-fill-green" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>Cloud</span>
+              <span id="stat-cloud-meta" class="mono">0 · —</span>
+            </div>
+            <div class="stat-track">
+              <div id="stat-cloud-bar" class="stat-fill stat-fill-blue" style="width: 0%"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-device-card glass-subpanel mobile-only-block" aria-label="Device and network status">
+          <div class="sidebar-device-label">Device &amp; Network</div>
+          <span id="mobile-nano-status-pill" class="nano-status glass-pill" aria-live="polite">
+            Checking Nano…
+          </span>
+          <label class="sim-offline-pill glass-pill" for="mobile-sim-offline-toggle">
+            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
+            <span>Simulate Offline</span>
+          </label>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="editor-topbar glass-panel">
+          <div class="title-wrap">
+            <label for="note-title" class="sr-only">Note title</label>
+            <input
+              id="note-title"
+              type="text"
+              class="note-title-input"
+              placeholder="New Study Note"
+            />
+          </div>
+
+          <div class="topbar-controls">
+            <label class="private-toggle glass-pill" for="private-toggle">
+              <input id="private-toggle" class="switch-input" type="checkbox" />
+              <span>Private (on-device only)</span>
+            </label>
+            <button
+              id="delete-note-btn"
+              type="button"
+              class="btn-danger pill-btn"
+              aria-label="Delete current note"
+            >
+              Delete
+            </button>
+          </div>
+        </header>
+
+        <div class="results-feed">
+          <section
+            id="result-card"
+            class="result-card glass-panel"
+            aria-live="polite"
+            aria-label="AI result"
+            hidden
+          >
+            <div class="result-header">
+              <div class="result-badges">
+                <span id="route-badge" class="badge">On-device</span>
+                <span id="sanitized-badge" class="badge badge-sanitized" hidden></span>
+              </div>
+              <span id="result-latency" class="latency mono"></span>
+            </div>
+            <p id="route-reason" class="route-reason"></p>
+            <div id="result-body" class="result-body"></div>
+          </section>
+        </div>
+
+        <div class="composer-dock">
+          <div id="task-popover" class="task-popover glass-panel" role="menu" aria-label="AI actions" hidden>
+            <div class="popover-section-label">On-Device Preferred</div>
+            <button type="button" class="action-btn popover-item active" data-task="summarize" role="menuitemradio" aria-checked="true">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 6h12M4 10h9M4 14h6" stroke-linecap="round" />
+              </svg>
+              <span>Summarize</span>
+            </button>
+            <button type="button" class="action-btn popover-item" data-task="quiz" role="menuitemradio" aria-checked="false">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M7.5 7.5a2.5 2.5 0 114.2 1.8c-.9.7-1.7 1.2-1.7 2.4M10 15h.01" stroke-linecap="round" />
+              </svg>
+              <span>Quiz Me (Flashcards)</span>
+            </button>
+            <button type="button" class="action-btn popover-item" data-task="grammar" role="menuitemradio" aria-checked="false">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 14l3.5-8 3.5 8M5.2 11.5h4.6M13 13l2 2 3-4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Fix grammar</span>
+            </button>
+            <button type="button" class="action-btn popover-item" data-task="title" role="menuitemradio" aria-checked="false">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M5 5h10M10 5v10" stroke-linecap="round" />
+              </svg>
+              <span>Suggest title</span>
+            </button>
+            <button type="button" class="action-btn popover-item" data-task="todos" role="menuitemradio" aria-checked="false">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 6l1.5 1.5L8 5M10 6h6M4 12l1.5 1.5L8 11M10 12h6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Extract to-dos</span>
+            </button>
+
+            <div class="popover-section-label">Cloud (Identifiers Masked)</div>
+            <button type="button" class="action-btn action-cloud popover-item" data-task="deep-analyze" role="menuitemradio" aria-checked="false">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="9" cy="9" r="5" />
+                <path d="M13 13l3.5 3.5" stroke-linecap="round" />
+              </svg>
+              <span>Deep Analyze</span>
+            </button>
+            <div class="popover-translate-row">
+              <button type="button" class="action-btn action-cloud popover-item" data-task="translate" role="menuitemradio" aria-checked="false">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <circle cx="10" cy="10" r="7" />
+                  <path d="M3 10h14M10 3a11 11 0 010 14M10 3a11 11 0 000 14" />
+                </svg>
+                <span>Translate</span>
+              </button>
+              <label for="translate-lang" class="sr-only">Target language</label>
+              <select id="translate-lang" class="lang-select" aria-label="Target language">
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Japanese">Japanese</option>
+              </select>
+            </div>
+          </div>
+
+          <section class="editor-wrap glass-panel">
+            <label for="note-content" class="sr-only">Study note content</label>
+            <textarea
+              id="note-content"
+              class="note-editor"
+              rows="2"
+              placeholder="Write or paste your lecture notes here... (Ctrl+Enter to Run)"
+            ></textarea>
+            <div class="composer-footer">
+              <div class="composer-left">
+                <button
+                  id="task-menu-btn"
+                  type="button"
+                  class="pill-btn task-menu-btn"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M10 4v12M4 10h12" stroke-linecap="round" />
+                  </svg>
+                  <span id="selected-task-chip">Summarize</span>
+                </button>
+                <span id="char-count" class="mono">0 chars</span>
+              </div>
+              <div class="composer-actions">
+                <button id="cancel-ai-btn" type="button" class="btn-stop pill-btn" hidden>
+                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <rect x="5" y="5" width="10" height="10" rx="2" />
+                  </svg>
+                  <span>Stop</span>
+                </button>
+                <button id="run-ai-btn" type="button" class="btn-primary pill-btn">
+                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M6 4.5l10 5.5-10 5.5V4.5z" />
+                  </svg>
+                  <span id="run-ai-label">Run</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="stats-modal" class="stats-modal glass-panel" aria-labelledby="stats-modal-title">
+      <div class="modal-header">
+        <div>
+          <h2 id="stats-modal-title" class="modal-title">Routing &amp; Telemetry Breakdown</h2>
+          <p class="modal-subtitle">Live inference metrics and smart router policy</p>
+        </div>
+        <button id="close-stats-modal" type="button" class="btn-ghost pill-btn" aria-label="Close">
+          Close
+        </button>
+      </div>
+
+      <div class="modal-kpi-grid">
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">On-Device Share</span>
+          <strong id="modal-ondevice-pct" class="kpi-value mono">0%</strong>
+        </div>
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">Cloud Calls Avoided</span>
+          <strong id="modal-avoided" class="kpi-value mono">0</strong>
+        </div>
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">Mobile Data Saved</span>
+          <strong id="modal-kb-saved" class="kpi-value mono">0.0 KB</strong>
+        </div>
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">Remote Threshold</span>
+          <strong id="modal-threshold" class="kpi-value mono">1500 chars</strong>
+        </div>
+      </div>
+
+      <div class="modal-latency-grid">
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">On-Device (Gemini Nano)</span>
+          <strong id="modal-ondevice-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
+        </div>
+        <div class="modal-kpi glass-subpanel">
+          <span class="kpi-label">Cloud (Gemini Flash-Lite)</span>
+          <strong id="modal-cloud-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
+        </div>
+      </div>
+
+      <div class="modal-rules">
+        <h3>How HybridNotes Routes Each Request</h3>
+        <ul>
+          <li><strong>Private or Offline → On-Device Only:</strong> Locks inference to Chrome's Gemini Nano so nothing leaves your device. Cloud-only tasks are refused.</li>
+          <li><strong>Long Private/Offline Notes → Map-Reduce:</strong> Notes above the threshold are split into 1,200-char chunks, processed locally, and merged.</li>
+          <li><strong>Deep Analyze / Translate → Cloud + Identifier Masking:</strong> Sensitive identifiers (emails, phone numbers, IDs) are masked locally before any cloud call.</li>
+          <li><strong>Short Simple Tasks (&lt; threshold) → Prefer On-Device:</strong> Summarize, Quiz Me, Grammar, Title, and To-dos run locally first and fall back to cloud if needed.</li>
+        </ul>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

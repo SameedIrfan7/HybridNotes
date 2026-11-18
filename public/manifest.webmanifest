@@ -1,0 +1,17 @@
+{
+  "name": "HybridNotes — AI Study Notes",
+  "short_name": "HybridNotes",
+  "description": "Private-by-default AI study notes with hybrid on-device and cloud routing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070505",
+  "theme_color": "#070505",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
