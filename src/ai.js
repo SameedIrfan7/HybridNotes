@@ -236,44 +236,108 @@ export function formatAIError(err, mode) {
  * @param {{ prompt: string, mode?: keyof typeof models, onDownloadProgress?: (pct: number) => void, signal?: AbortSignal }} params
  * @returns {Promise<{ text: string, source: "on-device" | "cloud", ms: number }>}
  */
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus) {
+  if (typeof LanguageModel === "undefined" || !LanguageModel.create) {
+    throw new Error("Chrome LanguageModel API is unavailable.");
+  }
+  onStatus?.("Loading local Gemini Nano session…");
+  const session = await withTimeout(
+    LanguageModel.create({
+      monitor(m) {
+        if (typeof onDownloadProgress === "function") {
+          m.addEventListener("downloadprogress", (e) => {
+            if (typeof e.loaded === "number") {
+              onDownloadProgress(Math.round(e.loaded * 100));
+            }
+          });
+        }
+      },
+    }),
+    25_000,
+    "On-device model timed out while loading."
+  );
+  try {
+    onStatus?.("Thinking on Gemini Nano (0 KB data)…");
+    const text = await withTimeout(
+      raceWithAbort(session.prompt(prompt, { signal }), signal),
+      35_000,
+      "On-device generation timed out."
+    );
+    return text;
+  } finally {
+    if (typeof session.destroy === "function") {
+      try {
+        session.destroy();
+      } catch {
+        // Ignore cleanup errors.
+      }
+    }
+  }
+}
+
 export async function runAI({
   prompt,
   mode = "PREFER_ON_DEVICE",
   onDownloadProgress,
+  onStatus,
   signal,
 }) {
   if (!prompt || !prompt.trim()) {
     throw new Error("Please write or paste some study notes first.");
   }
 
-  const model = models[mode] || models.PREFER_ON_DEVICE;
+  const start = performance.now();
 
-  if (mode === "PREFER_ON_DEVICE" || mode === "ONLY_ON_DEVICE") {
-    try {
-      await raceWithAbort(initOnDeviceModel(onDownloadProgress), signal);
-    } catch (initErr) {
-      if (initErr?.name === "AbortError") throw initErr;
-      if (mode === "ONLY_ON_DEVICE") {
-        throw new Error(formatAIError(initErr, mode));
+  if (mode === "ONLY_ON_DEVICE" || mode === "PREFER_ON_DEVICE") {
+    onStatus?.("Checking local Gemini Nano…");
+    const nanoStatus = await getOnDeviceStatus();
+
+    if (nanoStatus === "available" || nanoStatus === "downloading" || nanoStatus === "downloadable") {
+      try {
+        const text = await runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus);
+        return {
+          text,
+          source: "on-device",
+          ms: Math.round(performance.now() - start),
+        };
+      } catch (nativeErr) {
+        if (nativeErr?.name === "AbortError") throw nativeErr;
+        if (mode === "ONLY_ON_DEVICE") {
+          throw new Error(formatAIError(nativeErr, mode));
+        }
+        onStatus?.("Local Nano unavailable — switching to Cloud Flash-Lite…");
       }
+    } else if (mode === "ONLY_ON_DEVICE") {
+      throw new Error(formatAIError(new Error("unavailable"), mode));
+    } else {
+      onStatus?.("Nano unavailable — switching to Cloud Flash-Lite…");
     }
+  } else {
+    onStatus?.("Connecting to Cloud Gemini Flash-Lite…");
   }
 
-  const start = performance.now();
+  const cloudModel =
+    mode === "PREFER_ON_DEVICE" ? models.ONLY_IN_CLOUD : models[mode] || models.ONLY_IN_CLOUD;
+
   try {
-    const result = await raceWithAbort(model.generateContent(prompt), signal);
+    onStatus?.("Thinking & compiling response on Cloud Flash-Lite…");
+    const result = await withTimeout(
+      raceWithAbort(cloudModel.generateContent(prompt), signal),
+      30_000,
+      "Cloud request timed out. Please check your connection and try again."
+    );
     const response = result.response;
     const ms = Math.round(performance.now() - start);
 
-    let source;
-    if (response.inferenceSource === "ON_DEVICE") {
-      source = "on-device";
-    } else if (response.inferenceSource === "IN_CLOUD") {
-      source = "cloud";
-    } else {
-      source = mode === "ONLY_ON_DEVICE" ? "on-device" : "cloud";
-    }
-
+    const source = response.inferenceSource === "ON_DEVICE" ? "on-device" : "cloud";
     return {
       text: response.text(),
       source,

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#070505" />
     <title>HybridNotes — Private-by-Default AI Study Notes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -69,6 +69,16 @@
           <span>Simulate Offline</span>
         </label>
       </div>
+
+      <button
+        id="profile-btn"
+        type="button"
+        class="profile-avatar-btn"
+        aria-label="Open local profile and settings"
+        title="Profile & Settings"
+      >
+        <span id="profile-avatar-initials">S</span>
+      </button>
     </nav>
 
     <section id="home-view" class="home-view" aria-label="About HybridNotes">
@@ -97,7 +107,7 @@
           <div class="mockup-bar">
             <span class="mockup-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="mono mockup-url">hybridnotes · PWA</span>
-            <span class="badge badge-on-device">On-device Ready</span>
+            <span class="badge badge-on-device"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> On-device Ready</span>
           </div>
           <div class="mockup-grid">
             <div class="mockup-pane glass-subpanel">
@@ -145,7 +155,7 @@
             <div class="bento-preview cream-grid-surface">
               <div class="mini-card cream-mini">
                 <div class="mini-row">
-                  <span class="badge badge-cream-red">Masked Locally</span>
+                  <span class="badge badge-cream-red"><svg class="inline-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.8-4-1.4-7-5.3-7-9.8V6l7-3z"/><path d="M9.5 12l1.8 1.8 3.5-3.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Masked Locally</span>
                   <span class="mono">Before Cloud</span>
                 </div>
                 <div class="mini-code mono">
@@ -162,7 +172,7 @@
             <div class="bento-preview cream-grid-surface">
               <div class="mini-card cream-mini">
                 <div class="mini-row">
-                  <span class="badge badge-cream-dark">Map-Reduce</span>
+                  <span class="badge badge-cream-dark"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Map-Reduce</span>
                   <span class="mono">1,200 chars/chunk</span>
                 </div>
                 <div class="mini-code mono">
@@ -180,7 +190,7 @@
             <div class="bento-preview cream-grid-surface">
               <div class="mini-card cream-mini">
                 <div class="mini-row">
-                  <span class="badge badge-cream-red">Remote Config</span>
+                  <span class="badge badge-cream-red"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 18.2L7.3 3.6c.1-.6.9-.7 1.2-.2l2.9 5.4 3.4-6.4c.3-.5 1.1-.4 1.2.2l3.5 15.6-7.5 4.2-7.5-4.2z"/></svg> Remote Config</span>
                   <span class="mono">Live Threshold</span>
                 </div>
                 <div class="mini-code mono">
@@ -272,13 +282,13 @@
     <div id="workspace-view" class="app-shell" hidden>
       <aside id="sidebar" class="sidebar glass-panel" aria-label="Study notes">
         <div class="sidebar-header">
-          <h2 class="sidebar-heading">Notes</h2>
+          <h2 class="sidebar-heading">Chats</h2>
           <div class="sidebar-header-actions">
             <button id="new-note-btn" type="button" class="btn-primary pill-btn">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M10 4v12M4 10h12" stroke-linecap="round" />
               </svg>
-              <span>New</span>
+              <span>New Chat</span>
             </button>
             <button
               id="close-drawer-btn"
@@ -290,6 +300,17 @@
             </button>
           </div>
         </div>
+
+        <section class="sidebar-device-card glass-subpanel mobile-only-block" aria-label="Device and network status">
+          <div class="sidebar-device-label">Device &amp; Network</div>
+          <span id="mobile-nano-status-pill" class="nano-status glass-pill" aria-live="polite">
+            Checking Nano…
+          </span>
+          <label class="sim-offline-pill glass-pill" for="mobile-sim-offline-toggle">
+            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
+            <span>Simulate Offline</span>
+          </label>
+        </section>
 
         <ul id="note-list" class="note-list" role="listbox" aria-label="Saved notes"></ul>
 
@@ -326,29 +347,27 @@
             </div>
           </div>
         </section>
-
-        <section class="sidebar-device-card glass-subpanel mobile-only-block" aria-label="Device and network status">
-          <div class="sidebar-device-label">Device &amp; Network</div>
-          <span id="mobile-nano-status-pill" class="nano-status glass-pill" aria-live="polite">
-            Checking Nano…
-          </span>
-          <label class="sim-offline-pill glass-pill" for="mobile-sim-offline-toggle">
-            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
-            <span>Simulate Offline</span>
-          </label>
-        </section>
       </aside>
 
       <main class="workspace">
         <header class="editor-topbar glass-panel">
           <div class="title-wrap">
-            <label for="note-title" class="sr-only">Note title</label>
+            <label for="note-title" class="sr-only">Chat title</label>
             <input
               id="note-title"
               type="text"
               class="note-title-input"
-              placeholder="New Study Note"
+              placeholder="New Study Chat"
             />
+            <button
+              id="rename-note-btn"
+              type="button"
+              class="pill-btn btn-ghost rename-btn"
+              aria-label="Rename chat"
+              title="Rename chat"
+            >
+              Rename
+            </button>
           </div>
 
           <div class="topbar-controls">
@@ -367,24 +386,8 @@
           </div>
         </header>
 
-        <div class="results-feed">
-          <section
-            id="result-card"
-            class="result-card glass-panel"
-            aria-live="polite"
-            aria-label="AI result"
-            hidden
-          >
-            <div class="result-header">
-              <div class="result-badges">
-                <span id="route-badge" class="badge">On-device</span>
-                <span id="sanitized-badge" class="badge badge-sanitized" hidden></span>
-              </div>
-              <span id="result-latency" class="latency mono"></span>
-            </div>
-            <p id="route-reason" class="route-reason"></p>
-            <div id="result-body" class="result-body"></div>
-          </section>
+        <div id="results-feed" class="results-feed">
+          <div id="chat-thread" class="chat-thread" aria-live="polite" aria-label="Study chat messages"></div>
         </div>
 
         <div class="composer-dock">
@@ -454,7 +457,7 @@
               id="note-content"
               class="note-editor"
               rows="2"
-              placeholder="Write or paste your lecture notes here... (Ctrl+Enter to Run)"
+              placeholder="Paste lecture notes or ask a question... (Ctrl+Enter to Send)"
             ></textarea>
             <div class="composer-footer">
               <div class="composer-left">
@@ -473,17 +476,29 @@
                 <span id="char-count" class="mono">0 chars</span>
               </div>
               <div class="composer-actions">
-                <button id="cancel-ai-btn" type="button" class="btn-stop pill-btn" hidden>
+                <span id="run-timer" class="run-timer mono" hidden>0.0s</span>
+                <button
+                  id="cancel-ai-btn"
+                  type="button"
+                  class="btn-stop icon-circle-btn"
+                  aria-label="Stop generation"
+                  title="Stop"
+                  hidden
+                >
                   <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <rect x="5" y="5" width="10" height="10" rx="2" />
+                    <rect x="5.5" y="5.5" width="9" height="9" rx="2" />
                   </svg>
-                  <span>Stop</span>
                 </button>
-                <button id="run-ai-btn" type="button" class="btn-primary pill-btn">
-                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path d="M6 4.5l10 5.5-10 5.5V4.5z" />
+                <button
+                  id="run-ai-btn"
+                  type="button"
+                  class="btn-primary icon-circle-btn"
+                  aria-label="Send"
+                  title="Send (Ctrl+Enter)"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                    <path d="M10 15.5V4.5M5.5 9L10 4.5 14.5 9" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
-                  <span id="run-ai-label">Run</span>
                 </button>
               </div>
             </div>
@@ -524,11 +539,11 @@
 
       <div class="modal-latency-grid">
         <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">On-Device (Gemini Nano)</span>
+          <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> On-Device (Gemini Nano)</span>
           <strong id="modal-ondevice-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
         </div>
         <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">Cloud (Gemini Flash-Lite)</span>
+          <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 18.2L7.3 3.6c.1-.6.9-.7 1.2-.2l2.9 5.4 3.4-6.4c.3-.5 1.1-.4 1.2.2l3.5 15.6-7.5 4.2-7.5-4.2z"/></svg> Cloud (Gemini Flash-Lite)</span>
           <strong id="modal-cloud-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
         </div>
       </div>
@@ -541,6 +556,100 @@
           <li><strong>Deep Analyze / Translate → Cloud + Identifier Masking:</strong> Sensitive identifiers (emails, phone numbers, IDs) are masked locally before any cloud call.</li>
           <li><strong>Short Simple Tasks (&lt; threshold) → Prefer On-Device:</strong> Summarize, Quiz Me, Grammar, Title, and To-dos run locally first and fall back to cloud if needed.</li>
         </ul>
+      </div>
+    </dialog>
+
+    <dialog id="demo-modal" class="demo-modal glass-panel" aria-labelledby="demo-step-title">
+      <div class="demo-header">
+        <span id="demo-step-badge" class="badge badge-cloud">Step 1 of 3</span>
+        <button id="demo-skip-btn" type="button" class="pill-btn btn-ghost">Skip</button>
+      </div>
+
+      <h2 id="demo-step-title" class="demo-title">1. Paste your notes &amp; tap Send</h2>
+      <p id="demo-step-desc" class="demo-desc">
+        Type or paste any class note below and tap Send. Short notes stay right on your device.
+      </p>
+
+      <div class="demo-stage cream-card" aria-hidden="true">
+        <div class="demo-stage-bar">
+          <span class="demo-stage-dots"><i></i><i></i><i></i></span>
+          <span id="demo-stage-pill" class="badge badge-cream-red">Live Preview</span>
+        </div>
+        <div class="demo-screen">
+          <div class="demo-input-box">
+            <span class="demo-input-label mono" id="demo-input-label">YOUR NOTE</span>
+            <p class="demo-typed-line"><span id="demo-typed-text"></span><span class="demo-cursor">|</span></p>
+          </div>
+          <div id="demo-output-box" class="demo-output-box">
+            <div class="demo-output-meta">
+              <span id="demo-out-badge" class="badge badge-on-device">On-device</span>
+              <span id="demo-out-stat" class="mono">0 KB data</span>
+            </div>
+            <p id="demo-out-text" class="demo-out-text"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-footer">
+        <div id="demo-dots" class="carousel-dots" aria-hidden="true"></div>
+        <div class="demo-nav-btns">
+          <button id="demo-prev-btn" type="button" class="pill-btn btn-ghost" hidden>Back</button>
+          <button id="demo-next-btn" type="button" class="btn-primary pill-btn">Next →</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="profile-modal" class="demo-modal profile-modal glass-panel" aria-labelledby="profile-modal-title">
+      <div class="modal-header">
+        <div class="profile-header-id">
+          <div class="profile-avatar-lg" id="profile-modal-initials">S</div>
+          <div>
+            <h2 id="profile-modal-title" class="modal-title">Local Profile &amp; Settings</h2>
+            <p class="modal-subtitle">Stored only on this device — never uploaded to any server.</p>
+          </div>
+        </div>
+        <button id="close-profile-modal" type="button" class="btn-ghost pill-btn" aria-label="Close">
+          Close
+        </button>
+      </div>
+
+      <div class="profile-section glass-subpanel">
+        <div class="profile-section-title">Your Profile</div>
+        <div class="profile-fields">
+          <label class="profile-field">
+            <span>Display Name</span>
+            <input id="profile-name-input" type="text" class="profile-input" placeholder="Student" maxlength="32" />
+          </label>
+          <label class="profile-field">
+            <span>Course / Focus (optional)</span>
+            <input id="profile-focus-input" type="text" class="profile-input" placeholder="e.g. Biology, CS, Exam Prep" maxlength="48" />
+          </label>
+        </div>
+        <label class="profile-toggle-row" for="profile-default-private">
+          <span>Start new chats in Private (on-device only) mode</span>
+          <input id="profile-default-private" class="switch-input" type="checkbox" />
+        </label>
+      </div>
+
+      <div class="profile-section glass-subpanel">
+        <div class="profile-section-title">Device Storage &amp; Data Quota</div>
+        <div class="profile-quota-row">
+          <span id="profile-quota-summary" class="mono">0.0 KB / 5,120 KB localStorage</span>
+          <span id="profile-chats-count" class="mono">0 chats · 0 messages</span>
+        </div>
+        <div class="stat-track">
+          <div id="profile-quota-bar" class="stat-fill stat-fill-green" style="width: 1%"></div>
+        </div>
+        <p id="profile-savings-line" class="profile-savings-line">
+          0% on-device · 0 cloud calls avoided · 0.0 KB mobile data saved
+        </p>
+      </div>
+
+      <div class="profile-actions-grid">
+        <button id="profile-export-btn" type="button" class="pill-btn">Export Backup (.json)</button>
+        <button id="profile-tour-btn" type="button" class="pill-btn">Replay Quick Demo</button>
+        <button id="profile-stats-btn" type="button" class="pill-btn">Routing &amp; Telemetry</button>
+        <button id="profile-clear-btn" type="button" class="pill-btn btn-danger">Clear Local Data</button>
       </div>
     </dialog>
 

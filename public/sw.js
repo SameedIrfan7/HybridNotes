@@ -1,4 +1,4 @@
-const CACHE_NAME = "hybridnotes-v1";
+const CACHE_NAME = "hybridnotes-v2";
 const SHELL_ASSETS = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
