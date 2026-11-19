@@ -4,6 +4,8 @@ const ON_DEVICE_TASKS = new Set([
   "title",
   "todos",
   "quiz",
+  "ask",
+  "auto",
 ]);
 const CLOUD_ONLY_TASKS = new Set(["deep-analyze", "translate"]);
 const BARE_URL_RE = /^https?:\/\/\S+$/i;

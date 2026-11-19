@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#070505" />
     <title>HybridNotes — Private-by-Default AI Study Notes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -47,7 +47,7 @@
           role="tab"
           aria-selected="true"
         >
-          Home
+          ← Home
         </button>
         <button
           id="nav-workspace-btn"
@@ -56,29 +56,31 @@
           role="tab"
           aria-selected="false"
         >
-          Workspace
+          Workspace →
         </button>
       </div>
 
-      <div class="nav-right">
-        <button id="nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
-          Checking Nano…
-        </button>
-        <label class="sim-offline-pill glass-pill" for="sim-offline-toggle">
-          <input id="sim-offline-toggle" class="switch-input" type="checkbox" />
-          <span>Simulate Offline</span>
-        </label>
-      </div>
+      <div class="nav-end">
+        <div class="nav-right">
+          <button id="nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
+            Checking Nano…
+          </button>
+          <label class="sim-offline-pill glass-pill" for="sim-offline-toggle">
+            <input id="sim-offline-toggle" class="switch-input" type="checkbox" />
+            <span>Simulate Offline</span>
+          </label>
+        </div>
 
-      <button
-        id="profile-btn"
-        type="button"
-        class="profile-avatar-btn"
-        aria-label="Open local profile and settings"
-        title="Profile & Settings"
-      >
-        <span id="profile-avatar-initials">S</span>
-      </button>
+        <button
+          id="profile-btn"
+          type="button"
+          class="profile-avatar-btn"
+          aria-label="Open local profile and settings"
+          title="Profile & Settings"
+        >
+          <span id="profile-avatar-initials">S</span>
+        </button>
+      </div>
     </nav>
 
     <section id="home-view" class="home-view" aria-label="About HybridNotes">
@@ -107,7 +109,7 @@
           <div class="mockup-bar">
             <span class="mockup-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="mono mockup-url">hybridnotes · PWA</span>
-            <span class="badge badge-on-device"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> On-device Ready</span>
+            <span class="badge badge-on-device"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Example · On-device</span>
           </div>
           <div class="mockup-grid">
             <div class="mockup-pane glass-subpanel">
@@ -124,7 +126,7 @@
             <div class="mockup-pane glass-subpanel">
               <div class="mockup-label-row">
                 <span class="badge badge-on-device">On-device</span>
-                <span class="mono mockup-ms">280 ms · 0 KB used</span>
+                <span class="mono mockup-ms">Example · 0.3s · 0 KB</span>
               </div>
               <p class="mockup-text">
                 Short note (&lt; 1500 chars): routed locally to Chrome Gemini Nano—no mobile data
@@ -203,6 +205,82 @@
             <h3>Live Thresholds &amp; Stats</h3>
             <p>Tune routing thresholds via Firebase Remote Config and track cloud calls avoided plus KB saved.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="process-section glass-panel reveal-drop" aria-label="How Nano and Cloud work together">
+        <div class="process-top">
+          <div>
+            <span class="badge badge-on-device">Inside the Engine</span>
+            <h2 class="process-heading">Why Gemini Nano + Cloud Flash-Lite work better together.</h2>
+          </div>
+          <p class="process-sub">
+            Normal AI apps send every single word to the cloud. HybridNotes splits the job so you get
+            offline privacy on-device and fast reasoning in the cloud only when needed.
+          </p>
+        </div>
+
+        <div class="process-cards">
+          <div class="process-card glass-subpanel">
+            <div class="process-card-head">
+              <span class="badge badge-on-device">
+                <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
+                Gemini Nano (On-Device)
+              </span>
+              <span class="mono process-cost hl-green">0 KB data · Offline</span>
+            </div>
+            <p>
+              Runs locally inside Chrome with zero internet. Handles short notes, <strong>Auto</strong> questions,
+              <strong>Quiz Me</strong> flashcards, grammar fixes, and <strong>Private</strong> chats without touching a server.
+            </p>
+          </div>
+
+          <div class="process-card glass-subpanel">
+            <div class="process-card-head">
+              <span class="badge badge-cloud">
+                <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
+                Gemini 3.5 Flash-Lite (Cloud)
+              </span>
+              <span class="mono process-cost hl-red-bright">Fast (~4s) · Masked</span>
+            </div>
+            <p>
+              Acts like a standard fast cloud AI model for <strong>Deep Analyze</strong>, <strong>Translate</strong>,
+              and long lectures—after masking emails, phone numbers, and student IDs locally first.
+            </p>
+          </div>
+        </div>
+
+        <div class="process-diagram-wrap" aria-label="End-to-end routing process">
+          <svg class="process-svg" viewBox="0 0 920 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1. Write or Ask, 2. Smart Router checks Private, Offline and length, 3. Gemini Nano (0 KB) or Masked Cloud Flash-Lite, 4. Saved locally on your device">
+            <rect x="6" y="14" width="194" height="100" rx="16" fill="#140a0a" stroke="rgba(246,239,230,0.16)" stroke-width="1.5"/>
+            <text x="24" y="42" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">01 · INPUT</text>
+            <text x="24" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Write or Ask</text>
+            <text x="24" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Notes, code, or questions</text>
+
+            <path d="M206 64H236" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round"/>
+            <path d="M230 58L237 64L230 70" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <rect x="242" y="14" width="204" height="100" rx="16" fill="#140a0a" stroke="rgba(255,46,59,0.45)" stroke-width="1.5"/>
+            <text x="260" y="42" fill="#ff2e3b" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">02 · SMART ROUTER</text>
+            <text x="260" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Check Rules</text>
+            <text x="260" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Private · Offline · Length</text>
+
+            <path d="M452 64H482" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+            <path d="M476 58L483 64L476 70" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <rect x="488" y="14" width="210" height="100" rx="16" fill="#0f1714" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
+            <text x="506" y="42" fill="#34d399" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">03 · INFERENCE</text>
+            <text x="506" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Nano or Cloud</text>
+            <text x="506" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">0 KB local or masked cloud</text>
+
+            <path d="M704 64H734" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+            <path d="M728 58L735 64L728 70" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.7"/>
+
+            <rect x="740" y="14" width="174" height="100" rx="16" fill="#f6efe6"/>
+            <text x="758" y="42" fill="#b91c1c" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">04 · STORAGE</text>
+            <text x="758" y="68" fill="#120909" font-family="Manrope, sans-serif" font-size="16" font-weight="800">On Your Device</text>
+            <text x="758" y="90" fill="#4a3b3b" font-family="Inter, sans-serif" font-size="12">Saved in localStorage</text>
+          </svg>
         </div>
       </section>
 
@@ -357,7 +435,7 @@
               id="note-title"
               type="text"
               class="note-title-input"
-              placeholder="New Study Chat"
+              placeholder="Untitled note"
             />
           </div>
 
@@ -394,7 +472,13 @@
         <div class="composer-dock">
           <div id="task-popover" class="task-popover glass-panel" role="menu" aria-label="AI actions" hidden>
             <div class="popover-section-label">On-Device Preferred</div>
-            <button type="button" class="action-btn popover-item active" data-task="summarize" role="menuitemradio" aria-checked="true">
+            <button type="button" class="action-btn popover-item active" data-task="auto" role="menuitemradio" aria-checked="true">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M10 2.5l1.6 4.4L16 8.5l-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6L10 2.5z" stroke-linejoin="round" />
+              </svg>
+              <span>Auto (Smart)</span>
+            </button>
+            <button type="button" class="action-btn popover-item" data-task="summarize" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M4 6h12M4 10h9M4 14h6" stroke-linecap="round" />
               </svg>
@@ -472,7 +556,7 @@
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M10 4v12M4 10h12" stroke-linecap="round" />
                   </svg>
-                  <span id="selected-task-chip">Summarize</span>
+                  <span id="selected-task-chip">Auto</span>
                 </button>
                 <span id="char-count" class="mono">0 chars</span>
               </div>
@@ -691,7 +775,7 @@
       <h2 id="nano-dl-title" class="demo-title">Download Gemini Nano for Offline Use?</h2>
       <p class="demo-desc">
         To use HybridNotes offline with zero mobile data, Chrome needs to download Gemini Nano
-        locally once (~1.5 GB, requires ~2 GB free disk space). If you skip, HybridNotes will
+        locally once (requires about 22 GB free disk space). If you skip, HybridNotes will
         keep using Cloud Gemini 3.5 Flash-Lite whenever you're online.
       </p>
       <div id="nano-dl-progress-wrap" class="nano-dl-progress-wrap" hidden>
@@ -705,7 +789,7 @@
       </div>
       <div class="demo-footer">
         <button id="nano-dl-skip" type="button" class="pill-btn btn-ghost">Use Cloud Only</button>
-        <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Download Once (~1.5 GB)</button>
+        <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Download Once (~22 GB free)</button>
       </div>
     </dialog>
 

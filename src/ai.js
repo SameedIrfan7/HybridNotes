@@ -16,7 +16,7 @@ import {
 } from "firebase/remote-config";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAkBIA-1VZhfXq-Lu5JCAh_Gld2HBbGcK4",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "hybrid-3dd4b.firebaseapp.com",
   projectId: "hybrid-3dd4b",
   storageBucket: "hybrid-3dd4b.firebasestorage.app",
@@ -25,28 +25,33 @@ const firebaseConfig = {
   measurementId: "G-S877EEDQ7J",
 };
 
-const app = initializeApp(firebaseConfig);
+let app = null;
+let remoteConfig = null;
+let ai = null;
 
-// App Check is required by Firebase AI Logic.
-// In local dev, set VITE_RECAPTCHA_SITE_KEY in .env (gitignored) and register
-// the debug token printed to the browser console in Firebase Console > App Check.
-if (import.meta.env.DEV) {
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+try {
+  if (firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+    if (import.meta.env.DEV) {
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+    const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
+    remoteConfig = getRemoteConfig(app);
+    remoteConfig.defaultConfig = { on_device_max_chars: 1500 };
+    remoteConfig.settings.minimumFetchIntervalMillis = import.meta.env.DEV
+      ? 60_000
+      : 300_000;
+    ai = getAI(app, { backend: new GoogleAIBackend() });
+  }
+} catch {
+  // Keep app bootable even if Firebase env config is missing.
 }
-
-const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-if (recaptchaSiteKey) {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
-    isTokenAutoRefreshEnabled: true,
-  });
-}
-
-const remoteConfig = getRemoteConfig(app);
-remoteConfig.defaultConfig = { on_device_max_chars: 1500 };
-remoteConfig.settings.minimumFetchIntervalMillis = import.meta.env.DEV
-  ? 60_000
-  : 300_000;
 
 /**
  * Fetches the routing character threshold from Firebase Remote Config,
@@ -54,38 +59,39 @@ remoteConfig.settings.minimumFetchIntervalMillis = import.meta.env.DEV
  * @returns {Promise<number>}
  */
 export async function getMaxOnDeviceChars() {
+  if (!remoteConfig) return 1500;
   try {
     if (navigator.onLine) {
       await fetchAndActivate(remoteConfig);
     }
+    const value = getNumber(remoteConfig, "on_device_max_chars");
+    return value > 0 ? value : 1500;
   } catch {
-    // Offline or Remote Config unavailable: use cached/default value.
+    return 1500;
   }
-  const value = getNumber(remoteConfig, "on_device_max_chars");
-  return value > 0 ? value : 1500;
 }
-
-const ai = getAI(app, { backend: new GoogleAIBackend() });
 
 const CLOUD_MODEL = "gemini-3.5-flash-lite";
 
-const models = {
-  PREFER_ON_DEVICE: getGenerativeModel(ai, {
-    mode: InferenceMode.PREFER_ON_DEVICE,
-    inCloudParams: { model: CLOUD_MODEL },
-  }),
-  ONLY_IN_CLOUD: getGenerativeModel(ai, {
-    mode: InferenceMode.ONLY_IN_CLOUD,
-    inCloudParams: { model: CLOUD_MODEL },
-  }),
-  ONLY_ON_DEVICE: getGenerativeModel(ai, {
-    mode: InferenceMode.ONLY_ON_DEVICE,
-  }),
-  PREFER_IN_CLOUD: getGenerativeModel(ai, {
-    mode: InferenceMode.PREFER_IN_CLOUD,
-    inCloudParams: { model: CLOUD_MODEL },
-  }),
-};
+const models = ai
+  ? {
+      PREFER_ON_DEVICE: getGenerativeModel(ai, {
+        mode: InferenceMode.PREFER_ON_DEVICE,
+        inCloudParams: { model: CLOUD_MODEL },
+      }),
+      ONLY_IN_CLOUD: getGenerativeModel(ai, {
+        mode: InferenceMode.ONLY_IN_CLOUD,
+        inCloudParams: { model: CLOUD_MODEL },
+      }),
+      ONLY_ON_DEVICE: getGenerativeModel(ai, {
+        mode: InferenceMode.ONLY_ON_DEVICE,
+      }),
+      PREFER_IN_CLOUD: getGenerativeModel(ai, {
+        mode: InferenceMode.PREFER_IN_CLOUD,
+        inCloudParams: { model: CLOUD_MODEL },
+      }),
+    }
+  : {};
 
 let deviceInitPromise = null;
 let cachedNanoSession = null;
@@ -94,8 +100,22 @@ let cachedNanoSession = null;
  * Checks Chrome's built-in LanguageModel availability if present.
  * @returns {Promise<"available" | "downloading" | "downloadable" | "unavailable">}
  */
+export function isMobileDevice() {
+  try {
+    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+      return navigator.userAgentData.mobile;
+    }
+    return /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent || "");
+  } catch {
+    return false;
+  }
+}
+
 export async function getOnDeviceStatus() {
   try {
+    if (isMobileDevice()) {
+      return "unavailable";
+    }
     if (typeof LanguageModel === "undefined" || !LanguageModel.availability) {
       return "unavailable";
     }
@@ -218,7 +238,7 @@ function raceWithAbort(promise, signal) {
  */
 export function formatAIError(err, mode) {
   if (err?.name === "AbortError") {
-    return "Generation cancelled.";
+    return "Generation cancelled. Your note is saved locally.";
   }
 
   const msg = String(err?.message || err || "").toLowerCase();
@@ -229,7 +249,7 @@ export function formatAIError(err, mode) {
     msg.includes("rate") ||
     msg.includes("resource_exhausted")
   ) {
-    return "Cloud rate limit or quota reached. Toggle Private (on-device only) or shorten your note to run locally with zero cloud calls.";
+    return "Cloud is busy right now. Try again in a minute, or use on-device on desktop Chrome.";
   }
 
   if (
@@ -238,11 +258,17 @@ export function formatAIError(err, mode) {
     msg.includes("failed to fetch") ||
     msg.includes("offline")
   ) {
-    return "Network connection failed. Your note is saved locally—use Summarize, Fix grammar, Suggest title, Extract to-dos, or Quiz Me to run on-device.";
+    return "Network connection failed. Your note is saved locally—try again when online, or use on-device on desktop Chrome.";
+  }
+
+  if (msg.includes("appcheck") || msg.includes("app-check") || msg.includes("403")) {
+    return "App Check verification failed. Reload the page or check your connection—your note is saved locally.";
   }
 
   if (msg.includes("timed out") || msg.includes("timeout")) {
-    return "On-device Gemini Nano timed out. Try a shorter note or retry in a moment.";
+    return mode === "ONLY_ON_DEVICE"
+      ? "On-device Gemini Nano timed out. Try a shorter note or retry in a moment."
+      : "Cloud is busy right now. Try again in a minute, or use on-device on desktop Chrome.";
   }
 
   if (
@@ -251,14 +277,10 @@ export function formatAIError(err, mode) {
     msg.includes("languagemodel") ||
     msg.includes("unavailable")
   ) {
-    return "On-device AI is unavailable in this browser (requires Chrome Desktop 139+ with Gemini Nano). Turn off Private mode while online to allow cloud fallback.";
+    return "Private mode needs desktop Chrome with Gemini Nano.";
   }
 
-  if (msg.includes("appcheck") || msg.includes("403")) {
-    return "App Check verification failed. Register your debug token in Firebase Console or reload the page.";
-  }
-
-  return err?.message || "AI request failed. Your notes are safely saved locally.";
+  return "Cloud is busy right now. Try again in a minute, or use on-device on desktop Chrome.";
 }
 
 /**
@@ -290,35 +312,54 @@ async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, o
 
   try {
     onStatus?.("Thinking on Gemini Nano (0 KB data)…");
-    if (typeof session.promptStreaming === "function" && typeof onStream === "function") {
+    if (typeof session.promptStreaming === "function") {
       const stream = session.promptStreaming(prompt, { signal });
       let fullText = "";
-      const consumeStream = (async () => {
-        for await (const chunk of stream) {
-          if (signal?.aborted) {
-            throw new DOMException("Aborted", "AbortError");
-          }
-          if (typeof chunk === "string") {
-            if (fullText && chunk.startsWith(fullText)) {
-              fullText = chunk;
-            } else {
-              fullText += chunk;
+      let idleTimer = null;
+
+      const streamWithIdleWatchdog = new Promise((resolve, reject) => {
+        const armIdleTimer = (ms) => {
+          if (idleTimer) clearTimeout(idleTimer);
+          idleTimer = setTimeout(() => {
+            reject(new Error("On-device generation timed out before responding."));
+          }, ms);
+        };
+
+        armIdleTimer(45_000);
+
+        (async () => {
+          try {
+            for await (const chunk of stream) {
+              if (signal?.aborted) {
+                throw new DOMException("Aborted", "AbortError");
+              }
+              if (typeof chunk === "string" && chunk.length > 0) {
+                armIdleTimer(30_000);
+                if (fullText && chunk.startsWith(fullText)) {
+                  fullText = chunk;
+                } else {
+                  fullText += chunk;
+                }
+                if (typeof onStream === "function") {
+                  onStream(fullText);
+                }
+              }
             }
-            onStream(fullText);
+            resolve(fullText);
+          } catch (err) {
+            reject(err);
+          } finally {
+            if (idleTimer) clearTimeout(idleTimer);
           }
-        }
-        return fullText;
-      })();
-      return await withTimeout(
-        raceWithAbort(consumeStream, signal),
-        60_000,
-        "On-device generation timed out."
-      );
+        })();
+      });
+
+      return await raceWithAbort(streamWithIdleWatchdog, signal);
     }
 
     const text = await withTimeout(
       raceWithAbort(session.prompt(prompt, { signal }), signal),
-      60_000,
+      90_000,
       "On-device generation timed out."
     );
     return text;
@@ -370,12 +411,12 @@ export async function runAI({
         onStatus?.("Local Nano unavailable — switching to Cloud Flash-Lite…");
       }
     } else if (mode === "ONLY_ON_DEVICE") {
-      if (nanoStatus === "downloadable" || nanoStatus === "downloading") {
+      if (!isMobileDevice() && (nanoStatus === "downloadable" || nanoStatus === "downloading")) {
         throw new Error(
-          "To use HybridNotes offline or Private on-device, click 'Enable Offline AI (~1.5 GB)' in the top bar to download Gemini Nano locally once."
+          "Gemini Nano isn't downloaded yet. Click 'Enable Offline AI' in the top bar to download it once (about 22 GB free disk space required)."
         );
       }
-      throw new Error(formatAIError(new Error("unavailable"), mode));
+      throw new Error("Private mode needs desktop Chrome with Gemini Nano.");
     } else {
       onStatus?.(
         nanoStatus === "downloadable"

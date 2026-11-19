@@ -2,6 +2,7 @@ import {
   runAI,
   initOnDeviceModel,
   getOnDeviceStatus,
+  isMobileDevice,
   getMaxOnDeviceChars,
   sanitizeForCloud,
   runChunkedOnDevice,
@@ -18,7 +19,7 @@ const DEFAULT_PROFILE = {
   focus: "",
   defaultPrivate: false,
 };
-const DEFAULT_TITLE = "New Study Chat";
+const DEFAULT_TITLE = "Untitled note";
 
 const DEFAULT_STATS = {
   onDeviceCount: 0,
@@ -30,6 +31,7 @@ const DEFAULT_STATS = {
 };
 
 const TASK_LABELS = {
+  auto: "Auto",
   summarize: "Summarize",
   quiz: "Quiz Me",
   grammar: "Fix grammar",
@@ -150,7 +152,7 @@ let activeId = notes[0]?.id || null;
 let stats = loadStats();
 let profile = loadProfile();
 let maxOnDeviceChars = 1500;
-let selectedTask = "summarize";
+let selectedTask = "auto";
 let selectedModel = "auto";
 let activeAbortController = null;
 let slideIndex = 0;
@@ -256,13 +258,14 @@ function syncViewLayout() {
 function showView(view) {
   const isHome = view === "home";
   homeView.hidden = !isHome;
-  navHomeBtn.classList.toggle("active", isHome);
-  navWorkspaceBtn.classList.toggle("active", !isHome);
-  navHomeBtn.setAttribute("aria-selected", String(isHome));
-  navWorkspaceBtn.setAttribute("aria-selected", String(!isHome));
+  navHomeBtn.hidden = isHome;
+  navWorkspaceBtn.hidden = !isHome;
+  navHomeBtn.classList.toggle("active", !isHome);
+  navWorkspaceBtn.classList.toggle("active", isHome);
+  navHomeBtn.setAttribute("aria-selected", String(!isHome));
+  navWorkspaceBtn.setAttribute("aria-selected", String(isHome));
   setDrawerOpen(false);
   setPopoverOpen(false);
-  setModelPopoverOpen(false);
   setModelPopoverOpen(false);
   syncViewLayout();
   if (!isHome) {
@@ -289,12 +292,43 @@ function scrollFeedToBottom() {
 }
 
 function deriveTitle(content) {
-  const cleaned = content
+  const lines = String(content || "")
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .find(Boolean);
-  if (!cleaned) return DEFAULT_TITLE;
-  return cleaned.length > 38 ? `${cleaned.slice(0, 38)}…` : cleaned;
+    .filter(Boolean);
+  if (!lines.length) return DEFAULT_TITLE;
+
+  // Prefer a meaningful comment or non-import line if code is pasted
+  const commentLine = lines.find((l) => /^(?:\/\/|#|\/\*)\s*[A-Za-z0-9]/.test(l));
+  if (commentLine) {
+    const clean = commentLine.replace(/^(?:\/\/+|#+|\/\*+|\*+)\s*/, "").replace(/\*\/$/, "").trim();
+    if (clean.length >= 3) {
+      return clean.length > 36 ? `${clean.slice(0, 36)}…` : clean;
+    }
+  }
+
+  const funcMatch = content.match(
+    /(?:public|private|protected|static|async|export|function|def|class)\s+(?:[A-Za-z0-9_<>[\]]+\s+)?([A-Za-z_][A-Za-z0-9_]{2,})\s*[({]/
+  );
+  const meaningful = lines.find(
+    (l) => !/^(?:import\s|package\s|#include\s|using\s|from\s+\S+\s+import|[{};]+$)/.test(l)
+  );
+
+  if (funcMatch && lines.some((l) => /^(?:import\s|#include|package\s|def\s|function\s|class\s)/.test(l))) {
+    const name = funcMatch[1];
+    return `Code: ${name}`;
+  }
+
+  const candidate = (meaningful || lines[0])
+    .replace(/^[#*>\-•]+\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!candidate) return DEFAULT_TITLE;
+  if (candidate.length <= 36) return candidate;
+  const cut = candidate.slice(0, 36);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${lastSpace > 18 ? cut.slice(0, lastSpace) : cut}…`;
 }
 
 function selectTask(task) {
@@ -433,6 +467,7 @@ const GEMINI_SPARKLE_SVG =
 let lastNanoStatus = "unavailable";
 
 async function refreshNanoStatus() {
+  const mobile = isMobileDevice();
   const status = await getOnDeviceStatus();
   lastNanoStatus = status;
   const pills = [nanoStatusPill, mobileNanoStatusPill].filter(Boolean);
@@ -441,26 +476,26 @@ async function refreshNanoStatus() {
     if (status === "available") {
       pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Gemini Nano ready</span>`;
       pill.classList.add("nano-ready");
-    } else if (status === "downloading") {
+    } else if (status === "downloading" && !mobile) {
       pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Downloading Nano…</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
-    } else if (status === "downloadable") {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Enable Offline AI (~1.5 GB)</span>`;
+    } else if (status === "downloadable" && !mobile) {
+      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Enable Offline AI</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
-      pill.title = "Click to download Gemini Nano once for offline use";
+      pill.title = "Click to download Gemini Nano once (about 22 GB free space needed)";
     } else {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Nano unavailable · using cloud</span>`;
+      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>On-device AI unavailable on this device. Using cloud with identifiers masked.</span>`;
       pill.classList.add("nano-warn");
     }
   }
 }
 
 function openNanoDownloadModal() {
-  if (!nanoDownloadModal) return;
+  if (!nanoDownloadModal || isMobileDevice()) return;
   if (lastNanoStatus !== "downloadable" && lastNanoStatus !== "downloading") return;
   setDrawerOpen(false);
   nanoDlConfirm.disabled = false;
-  nanoDlConfirm.textContent = "Download Once (~1.5 GB)";
+  nanoDlConfirm.textContent = "Download Once (~22 GB free)";
   nanoDlProgressWrap.hidden = lastNanoStatus !== "downloading";
   nanoDownloadModal.showModal();
 }
@@ -576,11 +611,30 @@ function renderThread() {
       chars.textContent = `${msg.text.length} chars`;
       meta.append(tag, chars);
 
+      const lineCount = msg.text.split(/\r?\n/).length;
+      const isLong = msg.text.length > 260 || lineCount > 5;
+
       const textEl = document.createElement("div");
-      textEl.className = "chat-msg-text";
+      textEl.className = `chat-msg-text${isLong ? " is-collapsed" : ""}`;
       textEl.textContent = msg.text;
 
       bubble.append(meta, textEl);
+
+      if (isLong) {
+        const expandBtn = document.createElement("button");
+        expandBtn.type = "button";
+        expandBtn.className = "msg-expand-btn";
+        expandBtn.setAttribute("aria-expanded", "false");
+        expandBtn.innerHTML =
+          '<span>Show full</span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 7.5l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        expandBtn.addEventListener("click", () => {
+          const collapsed = textEl.classList.toggle("is-collapsed");
+          expandBtn.setAttribute("aria-expanded", String(!collapsed));
+          expandBtn.querySelector("span").textContent = collapsed ? "Show full" : "Show less";
+        });
+        bubble.appendChild(expandBtn);
+      }
+
       chatThreadEl.appendChild(bubble);
     } else {
       const card = document.createElement("article");
@@ -688,7 +742,7 @@ function renderThread() {
         const isThinking = msg.badgeText === "Running...";
         body.className = `result-body${isThinking ? " is-thinking" : ""}`;
         if (isThinking) {
-          body.textContent = msg.text || "";
+          body.innerHTML = `<span class="thinking-row"><span class="typing-wave" aria-hidden="true"><i></i><i></i><i></i></span><span>${escapeHtml(msg.text || "Thinking…")}</span></span>`;
         } else {
           body.innerHTML = renderMarkdownSafe(msg.text || "");
         }
@@ -722,12 +776,55 @@ function updateOfflineBanner() {
   offlineBanner.hidden = !isAppOffline();
 }
 
-function buildPrompt(task, text) {
-  switch (task) {
+const HYBRIDNOTES_SELF_CONTEXT =
+  "You are the assistant inside HybridNotes, a private-by-default hybrid AI study notes PWA. HybridNotes routes short tasks, interactive Quiz Me MCQs, and Private/Offline notes to on-device Chrome Gemini Nano (0 KB data), and routes longer or deep tasks to Cloud Gemini 3.5 Flash-Lite after masking emails, phone numbers, and student IDs locally. All chats, stats, and profiles are stored locally in the user's browser (localStorage).";
+
+function inferAutoIntent(text) {
+  const t = text.trim().toLowerCase();
+  if (/\b(quiz me|test me|mcq|flashcards?|practice questions?)\b/.test(t)) return "quiz";
+  if (/\b(fix grammar|proofread|spell\s*check)\b/.test(t)) return "grammar";
+  if (/\b(extract to-?dos?|action items?|checklist)\b/.test(t)) return "todos";
+  if (/\b(suggest title|give.*title)\b/.test(t)) return "title";
+  if (/^(summarize|tl;?dr|summary)\b/.test(t)) return "summarize";
+  return "chat";
+}
+
+function getRecentChatContext(chat, maxChars = 1100) {
+  if (!chat || !Array.isArray(chat.messages) || chat.messages.length === 0) return "";
+  const recent = chat.messages
+    .filter((m) => m.text && m.badgeText !== "Running..." && m.badgeText !== "Error")
+    .slice(-4);
+  if (!recent.length) return "";
+  let out = "";
+  for (const m of recent) {
+    const label = m.role === "user" ? "User" : "Assistant";
+    const snippet = m.text.length > 420 ? `${m.text.slice(0, 420)}…` : m.text;
+    const line = `${label}: ${snippet}\n`;
+    if (out.length + line.length > maxChars) break;
+    out += line;
+  }
+  return out.trim();
+}
+
+function buildPrompt(task, text, chat = null) {
+  const mentionsApp = /hybrid\s*notes|this app|this tool|how do you work/i.test(text);
+  const appPrefix = mentionsApp ? `${HYBRIDNOTES_SELF_CONTEXT}\n\n` : "";
+  const history = getRecentChatContext(chat);
+  const historyBlock = history ? `Recent conversation:\n${history}\n\n` : "";
+
+  const effectiveTask = task === "auto" ? inferAutoIntent(text) : task;
+
+  if (effectiveTask === "chat") {
+    return `${appPrefix}${historyBlock}You are a helpful, concise study and coding assistant. Answer the user's message, question, doubt, or code explanation directly and clearly (use short bullet points or code blocks when helpful):\n\n${text}`;
+  }
+
+  switch (effectiveTask) {
     case "summarize":
-      return `Summarize these study notes clearly in 3-4 bullet points:\n\n${text}`;
-    case "quiz":
-      return `Create 3-4 multiple-choice quiz questions based ONLY on these study notes. Return ONLY a valid JSON array with no markdown or extra text, using this exact schema: [{"q":"Question text?","options":["Option A","Option B","Option C","Option D"],"answerIndex":0,"explanation":"Short 1-sentence explanation."}]\n\nNotes:\n${text}`;
+      return `${appPrefix}${historyBlock}Summarize these study notes clearly in 3-4 bullet points:\n\n${text}`;
+    case "quiz": {
+      const sourceMaterial = text.length < 80 && history ? `${history}\n\nRequest: ${text}` : text;
+      return `Create 3-4 multiple-choice quiz questions based ONLY on the study material below. Return ONLY a valid JSON array with no markdown or extra text, using this exact schema: [{"q":"Question text?","options":["Option A","Option B","Option C","Option D"],"answerIndex":0,"explanation":"Short 1-sentence explanation."}]\n\nMaterial:\n${sourceMaterial}`;
+    }
     case "grammar":
       return `Fix grammar and spelling in these study notes while keeping the meaning:\n\n${text}`;
     case "title":
@@ -1001,37 +1098,79 @@ async function handleRun() {
       extraReason = ` (Split into ${res.chunks} chunks on-device.)`;
     } else {
       let inputText = text;
-      if (route.mode === "ONLY_IN_CLOUD" || route.mode === "PREFER_IN_CLOUD") {
+      const willUseCloudDirectly =
+        route.mode === "ONLY_IN_CLOUD" ||
+        route.mode === "PREFER_IN_CLOUD" ||
+        (route.mode === "PREFER_ON_DEVICE" && lastNanoStatus !== "available");
+      if (willUseCloudDirectly) {
         const clean = sanitizeForCloud(text);
         inputText = clean.sanitizedText;
         privacySummary = clean.summary;
       }
 
-      const updateLiveText = (statusText, isStream = false) => {
+      let streamTarget = "";
+      let streamShown = 0;
+      let streamRaf = null;
+
+      const paintStream = () => {
+        const bodies = chatThreadEl.querySelectorAll(".result-body");
+        const lastBody = bodies[bodies.length - 1];
+        if (!lastBody) return;
+        lastBody.classList.remove("is-thinking");
+        const slice = streamTarget.slice(0, streamShown);
+        lastBody.innerHTML = `${renderMarkdownSafe(slice)}<span class="stream-cursor" aria-hidden="true"></span>`;
+        scrollFeedToBottom();
+      };
+
+      const stepStream = () => {
+        if (streamShown < streamTarget.length) {
+          const remaining = streamTarget.length - streamShown;
+          const step = Math.max(1, Math.min(6, Math.ceil(remaining / 10)));
+          streamShown = Math.min(streamTarget.length, streamShown + step);
+          paintStream();
+          streamRaf = requestAnimationFrame(stepStream);
+        } else {
+          streamRaf = null;
+        }
+      };
+
+      const updateLiveStatus = (statusText) => {
         aiMsg.text = statusText;
         const bodies = chatThreadEl.querySelectorAll(".result-body");
         const lastBody = bodies[bodies.length - 1];
-        if (lastBody) {
-          if (isStream) {
-            lastBody.classList.remove("is-thinking");
-            lastBody.innerHTML = renderMarkdownSafe(statusText);
-          } else {
-            lastBody.textContent = statusText;
-          }
+        if (lastBody && !streamTarget) {
+          lastBody.innerHTML = `<span class="thinking-row"><span class="typing-wave" aria-hidden="true"><i></i><i></i><i></i></span><span>${escapeHtml(statusText)}</span></span>`;
           scrollFeedToBottom();
         }
       };
 
-      res = await runAI({
-        prompt: buildPrompt(task, inputText),
-        mode: route.mode,
-        signal,
-        onStatus: (s) => updateLiveText(s, false),
-        onStream: task === "quiz" ? undefined : (partial) => updateLiveText(partial, true),
-        onDownloadProgress: (pct) => {
-          updateLiveText(`Downloading Gemini Nano locally: ${pct}%`, false);
-        },
-      });
+      const onStreamToken = (partial) => {
+        streamTarget = partial;
+        aiMsg.text = partial;
+        if (!streamRaf) {
+          streamRaf = requestAnimationFrame(stepStream);
+        }
+      };
+
+      const isQuiz = task === "quiz" || (task === "auto" && inferAutoIntent(text) === "quiz");
+
+      try {
+        res = await runAI({
+          prompt: buildPrompt(task, inputText, chat),
+          mode: route.mode,
+          signal,
+          onStatus: updateLiveStatus,
+          onStream: isQuiz ? undefined : onStreamToken,
+          onDownloadProgress: (pct) => {
+            updateLiveStatus(`Downloading Gemini Nano locally: ${pct}%`);
+          },
+        });
+      } finally {
+        if (streamRaf) {
+          cancelAnimationFrame(streamRaf);
+          streamRaf = null;
+        }
+      }
     }
 
     const savedBytes = new Blob([text, res.text]).size;
@@ -1049,7 +1188,8 @@ async function handleRun() {
     aiMsg.latencyText = formatSec(res.ms);
     aiMsg.reason = reasonText;
     aiMsg.text = res.text;
-    if (task === "quiz") {
+    const effectiveTask = task === "auto" ? inferAutoIntent(text) : task;
+    if (effectiveTask === "quiz") {
       const parsedQuiz = parseQuizItems(res.text);
       if (parsedQuiz) aiMsg.quizItems = parsedQuiz;
     }
@@ -1545,7 +1685,7 @@ profileClearBtn?.addEventListener("click", () => {
 
 initCarousel();
 initScrollReveals();
-syncViewLayout();
+showView("home");
 updateOfflineBanner();
 updateSelectedChip();
 renderAll();
