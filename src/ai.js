@@ -88,6 +88,7 @@ const models = {
 };
 
 let deviceInitPromise = null;
+let cachedNanoSession = null;
 
 /**
  * Checks Chrome's built-in LanguageModel availability if present.
@@ -149,14 +150,39 @@ export function sanitizeForCloud(text) {
  * Ensures Chrome's on-device model is initialized before running an on-device request.
  * @param {(percent: number) => void} [onProgress]
  */
-export async function initOnDeviceModel(onProgress) {
-  if (!deviceInitPromise) {
-    deviceInitPromise = models.PREFER_ON_DEVICE.initializeDeviceModel((val) => {
-      if (typeof onProgress === "function") {
-        onProgress(Math.round(val * 100));
-      }
+async function getBaseNanoSession(onProgress, allowDownload = false) {
+  if (cachedNanoSession) return cachedNanoSession;
+  if (typeof LanguageModel !== "undefined" && LanguageModel.create) {
+    const status = await getOnDeviceStatus();
+    const canStart =
+      status === "available" ||
+      (allowDownload && (status === "downloading" || status === "downloadable") && navigator.onLine);
+    if (canStart) {
+      cachedNanoSession = await LanguageModel.create({
+        monitor(m) {
+          if (typeof onProgress === "function" && status !== "available") {
+            m.addEventListener("downloadprogress", (e) => {
+              if (typeof e.loaded === "number" && e.loaded < 1) {
+                onProgress(Math.round(e.loaded * 100));
+              }
+            });
+          }
+        },
+      });
+      return cachedNanoSession;
+    }
+  }
+  return null;
+}
+
+export async function initOnDeviceModel(onProgress, { allowDownload = false } = {}) {
+  if (!deviceInitPromise || allowDownload) {
+    deviceInitPromise = getBaseNanoSession(onProgress, allowDownload).then((session) => {
+      if (!session) deviceInitPromise = null;
+      return session;
     }).catch((err) => {
       deviceInitPromise = null;
+      cachedNanoSession = null;
       throw err;
     });
   }
@@ -215,6 +241,10 @@ export function formatAIError(err, mode) {
     return "Network connection failed. Your note is saved locally—use Summarize, Fix grammar, Suggest title, Extract to-dos, or Quiz Me to run on-device.";
   }
 
+  if (msg.includes("timed out") || msg.includes("timeout")) {
+    return "On-device Gemini Nano timed out. Try a shorter note or retry in a moment.";
+  }
+
   if (
     mode === "ONLY_ON_DEVICE" ||
     msg.includes("on-device") ||
@@ -244,42 +274,65 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus) {
+async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, onStream) {
   if (typeof LanguageModel === "undefined" || !LanguageModel.create) {
     throw new Error("Chrome LanguageModel API is unavailable.");
   }
   onStatus?.("Loading local Gemini Nano session…");
   const session = await withTimeout(
-    LanguageModel.create({
-      monitor(m) {
-        if (typeof onDownloadProgress === "function") {
-          m.addEventListener("downloadprogress", (e) => {
-            if (typeof e.loaded === "number") {
-              onDownloadProgress(Math.round(e.loaded * 100));
-            }
-          });
-        }
-      },
-    }),
-    25_000,
+    initOnDeviceModel(onDownloadProgress),
+    45_000,
     "On-device model timed out while loading."
   );
+  if (!session) {
+    throw new Error("Chrome LanguageModel session unavailable.");
+  }
+
   try {
     onStatus?.("Thinking on Gemini Nano (0 KB data)…");
+    if (typeof session.promptStreaming === "function" && typeof onStream === "function") {
+      const stream = session.promptStreaming(prompt, { signal });
+      let fullText = "";
+      const consumeStream = (async () => {
+        for await (const chunk of stream) {
+          if (signal?.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+          if (typeof chunk === "string") {
+            if (fullText && chunk.startsWith(fullText)) {
+              fullText = chunk;
+            } else {
+              fullText += chunk;
+            }
+            onStream(fullText);
+          }
+        }
+        return fullText;
+      })();
+      return await withTimeout(
+        raceWithAbort(consumeStream, signal),
+        60_000,
+        "On-device generation timed out."
+      );
+    }
+
     const text = await withTimeout(
       raceWithAbort(session.prompt(prompt, { signal }), signal),
-      35_000,
+      60_000,
       "On-device generation timed out."
     );
     return text;
-  } finally {
-    if (typeof session.destroy === "function") {
+  } catch (err) {
+    if (err?.name !== "AbortError") {
       try {
-        session.destroy();
+        session.destroy?.();
       } catch {
         // Ignore cleanup errors.
       }
+      cachedNanoSession = null;
+      deviceInitPromise = null;
     }
+    throw err;
   }
 }
 
@@ -288,6 +341,7 @@ export async function runAI({
   mode = "PREFER_ON_DEVICE",
   onDownloadProgress,
   onStatus,
+  onStream,
   signal,
 }) {
   if (!prompt || !prompt.trim()) {
@@ -300,9 +354,9 @@ export async function runAI({
     onStatus?.("Checking local Gemini Nano…");
     const nanoStatus = await getOnDeviceStatus();
 
-    if (nanoStatus === "available" || nanoStatus === "downloading" || nanoStatus === "downloadable") {
+    if (nanoStatus === "available") {
       try {
-        const text = await runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus);
+        const text = await runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, onStream);
         return {
           text,
           source: "on-device",
@@ -316,9 +370,18 @@ export async function runAI({
         onStatus?.("Local Nano unavailable — switching to Cloud Flash-Lite…");
       }
     } else if (mode === "ONLY_ON_DEVICE") {
+      if (nanoStatus === "downloadable" || nanoStatus === "downloading") {
+        throw new Error(
+          "To use HybridNotes offline or Private on-device, click 'Enable Offline AI (~1.5 GB)' in the top bar to download Gemini Nano locally once."
+        );
+      }
       throw new Error(formatAIError(new Error("unavailable"), mode));
     } else {
-      onStatus?.("Nano unavailable — switching to Cloud Flash-Lite…");
+      onStatus?.(
+        nanoStatus === "downloadable"
+          ? "Offline AI not downloaded yet — using Cloud Flash-Lite…"
+          : "Nano unavailable — switching to Cloud Flash-Lite…"
+      );
     }
   } else {
     onStatus?.("Connecting to Cloud Gemini Flash-Lite…");

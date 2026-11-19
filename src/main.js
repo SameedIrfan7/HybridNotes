@@ -75,6 +75,10 @@ const translateLangEl = document.getElementById("translate-lang");
 const taskMenuBtn = document.getElementById("task-menu-btn");
 const taskPopover = document.getElementById("task-popover");
 const selectedTaskChip = document.getElementById("selected-task-chip");
+const modelMenuBtn = document.getElementById("model-menu-btn");
+const modelPopover = document.getElementById("model-popover");
+const selectedModelChip = document.getElementById("selected-model-chip");
+const modelOptBtns = document.querySelectorAll(".model-opt");
 const runAiBtn = document.getElementById("run-ai-btn");
 const cancelAiBtn = document.getElementById("cancel-ai-btn");
 const runTimerEl = document.getElementById("run-timer");
@@ -132,12 +136,22 @@ const profileTourBtn = document.getElementById("profile-tour-btn");
 const profileStatsBtn = document.getElementById("profile-stats-btn");
 const profileClearBtn = document.getElementById("profile-clear-btn");
 
+const nanoDownloadModal = document.getElementById("nano-download-modal");
+const nanoDlClose = document.getElementById("nano-dl-close");
+const nanoDlSkip = document.getElementById("nano-dl-skip");
+const nanoDlConfirm = document.getElementById("nano-dl-confirm");
+const nanoDlProgressWrap = document.getElementById("nano-dl-progress-wrap");
+const nanoDlStatusText = document.getElementById("nano-dl-status-text");
+const nanoDlPct = document.getElementById("nano-dl-pct");
+const nanoDlBar = document.getElementById("nano-dl-bar");
+
 let notes = loadNotes();
 let activeId = notes[0]?.id || null;
 let stats = loadStats();
 let profile = loadProfile();
 let maxOnDeviceChars = 1500;
 let selectedTask = "summarize";
+let selectedModel = "auto";
 let activeAbortController = null;
 let slideIndex = 0;
 let carouselPaused = false;
@@ -188,9 +202,43 @@ function setDrawerOpen(open) {
   mobileMenuBtn.setAttribute("aria-expanded", String(open));
 }
 
+const MODEL_CHIP_LABELS = {
+  auto: "Auto",
+  nano: "Gemini Nano",
+  "flash-lite": "Flash-Lite",
+};
+
+function formatSec(ms) {
+  if (typeof ms !== "number" || Number.isNaN(ms)) return "—";
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 function setPopoverOpen(open) {
   taskPopover.hidden = !open;
   taskMenuBtn.setAttribute("aria-expanded", String(open));
+  if (open && modelPopover) setModelPopoverOpen(false);
+}
+
+function setModelPopoverOpen(open) {
+  if (!modelPopover || !modelMenuBtn) return;
+  modelPopover.hidden = !open;
+  modelMenuBtn.setAttribute("aria-expanded", String(open));
+  if (open) {
+    taskPopover.hidden = true;
+    taskMenuBtn.setAttribute("aria-expanded", "false");
+  }
+}
+
+function selectModel(model) {
+  selectedModel = model;
+  modelOptBtns.forEach((btn) => {
+    const active = btn.dataset.model === model;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-checked", String(active));
+  });
+  if (selectedModelChip) {
+    selectedModelChip.textContent = MODEL_CHIP_LABELS[model] || "Auto";
+  }
 }
 
 function syncViewLayout() {
@@ -214,6 +262,8 @@ function showView(view) {
   navWorkspaceBtn.setAttribute("aria-selected", String(!isHome));
   setDrawerOpen(false);
   setPopoverOpen(false);
+  setModelPopoverOpen(false);
+  setModelPopoverOpen(false);
   syncViewLayout();
   if (!isHome) {
     autoResizeEditor();
@@ -364,8 +414,8 @@ function renderStats() {
   const kbSaved = (stats.bytesSaved / 1024).toFixed(1);
 
   statsSummaryEl.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} avoided · ${kbSaved} KB saved`;
-  statOnDeviceMeta.textContent = `${stats.onDeviceCount} · ${onAvg !== null ? `${onAvg} ms` : "—"}`;
-  statCloudMeta.textContent = `${stats.cloudCount} · ${cloudAvg !== null ? `${cloudAvg} ms` : "—"}`;
+  statOnDeviceMeta.textContent = `${stats.onDeviceCount} · ${onAvg !== null ? formatSec(onAvg) : "—"}`;
+  statCloudMeta.textContent = `${stats.cloudCount} · ${cloudAvg !== null ? formatSec(cloudAvg) : "—"}`;
   statOnDeviceBar.style.width = `${onPct}%`;
   statCloudBar.style.width = `${cloudPct}%`;
 
@@ -373,30 +423,81 @@ function renderStats() {
   modalAvoided.textContent = String(stats.cloudCallsAvoided);
   modalKbSaved.textContent = `${kbSaved} KB`;
   modalThreshold.textContent = `${maxOnDeviceChars} chars`;
-  modalOnDeviceDetail.textContent = `${stats.onDeviceCount} runs · ${onAvg !== null ? `${onAvg} ms avg` : "—"}`;
-  modalCloudDetail.textContent = `${stats.cloudCount} runs · ${cloudAvg !== null ? `${cloudAvg} ms avg` : "—"}`;
+  modalOnDeviceDetail.textContent = `${stats.onDeviceCount} runs · ${onAvg !== null ? `${formatSec(onAvg)} avg` : "—"}`;
+  modalCloudDetail.textContent = `${stats.cloudCount} runs · ${cloudAvg !== null ? `${formatSec(cloudAvg)} avg` : "—"}`;
 }
 
 const GEMINI_SPARKLE_SVG =
   '<svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>';
 
+let lastNanoStatus = "unavailable";
+
 async function refreshNanoStatus() {
   const status = await getOnDeviceStatus();
+  lastNanoStatus = status;
   const pills = [nanoStatusPill, mobileNanoStatusPill].filter(Boolean);
   for (const pill of pills) {
-    pill.classList.remove("nano-ready", "nano-warn");
+    pill.classList.remove("nano-ready", "nano-warn", "nano-clickable");
     if (status === "available") {
       pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Gemini Nano ready</span>`;
       pill.classList.add("nano-ready");
-    } else if (status === "downloading" || status === "downloadable") {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Gemini Nano downloading</span>`;
-      pill.classList.add("nano-warn");
+    } else if (status === "downloading") {
+      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Downloading Nano…</span>`;
+      pill.classList.add("nano-warn", "nano-clickable");
+    } else if (status === "downloadable") {
+      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Enable Offline AI (~1.5 GB)</span>`;
+      pill.classList.add("nano-warn", "nano-clickable");
+      pill.title = "Click to download Gemini Nano once for offline use";
     } else {
       pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Nano unavailable · using cloud</span>`;
       pill.classList.add("nano-warn");
     }
   }
 }
+
+function openNanoDownloadModal() {
+  if (!nanoDownloadModal) return;
+  if (lastNanoStatus !== "downloadable" && lastNanoStatus !== "downloading") return;
+  setDrawerOpen(false);
+  nanoDlConfirm.disabled = false;
+  nanoDlConfirm.textContent = "Download Once (~1.5 GB)";
+  nanoDlProgressWrap.hidden = lastNanoStatus !== "downloading";
+  nanoDownloadModal.showModal();
+}
+
+nanoStatusPill?.addEventListener("click", openNanoDownloadModal);
+mobileNanoStatusPill?.addEventListener("click", openNanoDownloadModal);
+nanoDlClose?.addEventListener("click", () => nanoDownloadModal?.close());
+nanoDlSkip?.addEventListener("click", () => nanoDownloadModal?.close());
+nanoDownloadModal?.addEventListener("click", (e) => {
+  if (e.target === nanoDownloadModal) nanoDownloadModal.close();
+});
+
+nanoDlConfirm?.addEventListener("click", async () => {
+  nanoDlConfirm.disabled = true;
+  nanoDlConfirm.textContent = "Downloading…";
+  nanoDlProgressWrap.hidden = false;
+  nanoDlStatusText.textContent = "Downloading Gemini Nano locally…";
+  try {
+    await initOnDeviceModel(
+      (pct) => {
+        nanoDlPct.textContent = `${pct}%`;
+        nanoDlBar.style.width = `${pct}%`;
+      },
+      { allowDownload: true }
+    );
+    nanoDlPct.textContent = "100%";
+    nanoDlBar.style.width = "100%";
+    nanoDlStatusText.textContent = "Gemini Nano ready for offline use!";
+    await refreshNanoStatus();
+    setTimeout(() => nanoDownloadModal?.close(), 800);
+  } catch (err) {
+    nanoDlStatusText.textContent = err?.message || "Download failed or cancelled.";
+    nanoDlConfirm.disabled = false;
+    nanoDlConfirm.textContent = "Retry Download";
+    await refreshNanoStatus();
+  }
+});
 
 function getActiveNote() {
   return notes.find((n) => n.id === activeId) || null;
@@ -493,7 +594,7 @@ function renderThread() {
 
       const routeB = document.createElement("span");
       routeB.className = `badge ${msg.badgeClass || "badge-on-device"}`;
-      const showSparkle = msg.badgeText === "On-device" || msg.badgeText === "Cloud" || msg.badgeText === "Running...";
+      const showSparkle = msg.badgeText === "Gemini Nano" || msg.badgeText === "Gemini 3.5 Flash-Lite" || msg.badgeText === "On-device" || msg.badgeText === "Cloud" || msg.badgeText === "Running...";
       routeB.innerHTML = showSparkle
         ? `${GEMINI_SPARKLE_SVG}<span>${msg.badgeText || "On-device"}</span>`
         : (msg.badgeText || "On-device");
@@ -516,11 +617,83 @@ function renderThread() {
       reason.className = "route-reason";
       reason.textContent = msg.reason || "";
 
-      const body = document.createElement("div");
-      body.className = `result-body${msg.badgeText === "Running..." ? " is-thinking" : ""}`;
-      body.textContent = msg.text || "";
+      if (Array.isArray(msg.quizItems) && msg.quizItems.length > 0) {
+        const quizList = document.createElement("div");
+        quizList.className = "quiz-list";
 
-      card.append(header, reason, body);
+        let answeredCount = 0;
+        let correctCount = 0;
+
+        msg.quizItems.forEach((item, qIdx) => {
+          const qCard = document.createElement("div");
+          qCard.className = "quiz-card";
+
+          const qTitle = document.createElement("p");
+          qTitle.className = "quiz-q";
+          qTitle.textContent = `${qIdx + 1}. ${item.q}`;
+          qCard.appendChild(qTitle);
+
+          const optsWrap = document.createElement("div");
+          optsWrap.className = "quiz-options";
+          const isAnswered = typeof item.selectedIndex === "number";
+          if (isAnswered) {
+            answeredCount += 1;
+            if (item.selectedIndex === item.answerIndex) correctCount += 1;
+          }
+
+          (item.options || []).forEach((optText, oIdx) => {
+            const optBtn = document.createElement("button");
+            optBtn.type = "button";
+            optBtn.className = "quiz-opt-btn";
+            optBtn.textContent = `${String.fromCharCode(65 + oIdx)}. ${optText}`;
+            optBtn.disabled = isAnswered;
+
+            if (isAnswered) {
+              if (oIdx === item.answerIndex) {
+                optBtn.classList.add("is-correct");
+              } else if (oIdx === item.selectedIndex) {
+                optBtn.classList.add("is-wrong");
+              }
+            }
+
+            optBtn.addEventListener("click", () => {
+              item.selectedIndex = oIdx;
+              saveNotes();
+              renderThread();
+            });
+            optsWrap.appendChild(optBtn);
+          });
+
+          qCard.appendChild(optsWrap);
+
+          if (isAnswered) {
+            const fb = document.createElement("p");
+            const gotIt = item.selectedIndex === item.answerIndex;
+            fb.className = `quiz-feedback ${gotIt ? "correct" : "wrong"}`;
+            fb.textContent = `${gotIt ? "✓ Correct!" : `✗ Incorrect — Answer: ${String.fromCharCode(65 + item.answerIndex)}.`} ${item.explanation || ""}`;
+            qCard.appendChild(fb);
+          }
+
+          quizList.appendChild(qCard);
+        });
+
+        const scoreBar = document.createElement("div");
+        scoreBar.className = "quiz-score-bar mono";
+        scoreBar.textContent = `Score: ${correctCount} / ${msg.quizItems.length} (${answeredCount} answered)`;
+        quizList.appendChild(scoreBar);
+
+        card.append(header, reason, quizList);
+      } else {
+        const body = document.createElement("div");
+        const isThinking = msg.badgeText === "Running...";
+        body.className = `result-body${isThinking ? " is-thinking" : ""}`;
+        if (isThinking) {
+          body.textContent = msg.text || "";
+        } else {
+          body.innerHTML = renderMarkdownSafe(msg.text || "");
+        }
+        card.append(header, reason, body);
+      }
       chatThreadEl.appendChild(card);
     }
   }
@@ -554,7 +727,7 @@ function buildPrompt(task, text) {
     case "summarize":
       return `Summarize these study notes clearly in 3-4 bullet points:\n\n${text}`;
     case "quiz":
-      return `Create 3-4 concise study flashcards (Q: ... / A: ...) to test understanding of these notes:\n\n${text}`;
+      return `Create 3-4 multiple-choice quiz questions based ONLY on these study notes. Return ONLY a valid JSON array with no markdown or extra text, using this exact schema: [{"q":"Question text?","options":["Option A","Option B","Option C","Option D"],"answerIndex":0,"explanation":"Short 1-sentence explanation."}]\n\nNotes:\n${text}`;
     case "grammar":
       return `Fix grammar and spelling in these study notes while keeping the meaning:\n\n${text}`;
     case "title":
@@ -602,10 +775,99 @@ function stopRunTimer() {
   }
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatInlineMd(escapedLine) {
+  return escapedLine
+    .replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>')
+    .replace(/\$([^$\n]{1,32})\$/g, '<code class="md-inline-code">$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function renderMarkdownSafe(raw) {
+  if (!raw) return "";
+  const parts = String(raw).split(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g);
+  let html = "";
+
+  for (let i = 0; i < parts.length; i += 3) {
+    const textPart = parts[i] || "";
+    const lines = textPart.split(/\r?\n/);
+    let inList = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const bulletMatch = trimmed.match(/^(?:\*|-)\s+(.*)$/);
+      const headingMatch = trimmed.match(/^#{1,3}\s+(.*)$/);
+
+      if (bulletMatch) {
+        if (!inList) {
+          html += '<ul class="md-list">';
+          inList = true;
+        }
+        html += `<li>${formatInlineMd(escapeHtml(bulletMatch[1]))}</li>`;
+      } else {
+        if (inList) {
+          html += "</ul>";
+          inList = false;
+        }
+        if (headingMatch) {
+          html += `<h4 class="md-heading">${formatInlineMd(escapeHtml(headingMatch[1]))}</h4>`;
+        } else if (trimmed === "") {
+          html += '<div class="md-spacer"></div>';
+        } else {
+          html += `<p class="md-p">${formatInlineMd(escapeHtml(line))}</p>`;
+        }
+      }
+    }
+    if (inList) html += "</ul>";
+
+    if (i + 2 < parts.length) {
+      const codeBody = escapeHtml((parts[i + 2] || "").replace(/\n$/, ""));
+      html += `<pre class="md-code-block"><code>${codeBody}</code></pre>`;
+    }
+  }
+  return html;
+}
+
+function parseQuizItems(rawText) {
+  try {
+    const cleaned = rawText
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```$/i, "")
+      .trim();
+    const start = cleaned.indexOf("[");
+    const end = cleaned.lastIndexOf("]");
+    if (start === -1 || end === -1) return null;
+    const parsed = JSON.parse(cleaned.slice(start, end + 1));
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    const valid = parsed.filter(
+      (item) =>
+        item &&
+        typeof item.q === "string" &&
+        Array.isArray(item.options) &&
+        item.options.length >= 2 &&
+        typeof item.answerIndex === "number"
+    );
+    return valid.length > 0 ? valid : null;
+  } catch {
+    return null;
+  }
+}
+
 function setRunning(running, aiMsg = null) {
   runAiBtn.hidden = running;
   runAiBtn.disabled = running;
   taskMenuBtn.disabled = running;
+  if (modelMenuBtn) modelMenuBtn.disabled = running;
   cancelAiBtn.hidden = !running;
   if (running) {
     startRunTimer(aiMsg);
@@ -631,13 +893,33 @@ async function handleRun() {
     return;
   }
 
-  const route = decideRoute({
+  let route = decideRoute({
     task,
     text,
     isPrivate: chat.isPrivate,
     isOffline: isAppOffline(),
     maxOnDeviceChars,
   });
+
+  if (!route.blocked && selectedModel === "nano") {
+    route = {
+      mode: "ONLY_ON_DEVICE",
+      reason: "Model set to Gemini Nano (on-device only, 0 KB data).",
+    };
+  } else if (!route.blocked && selectedModel === "flash-lite") {
+    if (chat.isPrivate || isAppOffline()) {
+      route = {
+        mode: null,
+        blocked: true,
+        reason: "Refused: Gemini 3.5 Flash-Lite requires cloud access, while Private or Offline mode locks this chat on-device.",
+      };
+    } else {
+      route = {
+        mode: "ONLY_IN_CLOUD",
+        reason: "Model set to Gemini 3.5 Flash-Lite (cloud with identifier masking).",
+      };
+    }
+  }
 
   if (chat.autoTitled) {
     chat.title = deriveTitle(text);
@@ -725,20 +1007,29 @@ async function handleRun() {
         privacySummary = clean.summary;
       }
 
-      const updateLiveText = (statusText) => {
+      const updateLiveText = (statusText, isStream = false) => {
         aiMsg.text = statusText;
         const bodies = chatThreadEl.querySelectorAll(".result-body");
         const lastBody = bodies[bodies.length - 1];
-        if (lastBody) lastBody.textContent = statusText;
+        if (lastBody) {
+          if (isStream) {
+            lastBody.classList.remove("is-thinking");
+            lastBody.innerHTML = renderMarkdownSafe(statusText);
+          } else {
+            lastBody.textContent = statusText;
+          }
+          scrollFeedToBottom();
+        }
       };
 
       res = await runAI({
         prompt: buildPrompt(task, inputText),
         mode: route.mode,
         signal,
-        onStatus: updateLiveText,
+        onStatus: (s) => updateLiveText(s, false),
+        onStream: task === "quiz" ? undefined : (partial) => updateLiveText(partial, true),
         onDownloadProgress: (pct) => {
-          updateLiveText(`Downloading Gemini Nano locally: ${pct}%`);
+          updateLiveText(`Downloading Gemini Nano locally: ${pct}%`, false);
         },
       });
     }
@@ -752,12 +1043,16 @@ async function handleRun() {
         ? `${route.reason} (Fell back to cloud.)`
         : `${route.reason}${extraReason}`;
 
-    aiMsg.badgeText = isOnDevice ? "On-device" : "Cloud";
+    aiMsg.badgeText = isOnDevice ? "Gemini Nano" : "Gemini 3.5 Flash-Lite";
     aiMsg.badgeClass = isOnDevice ? "badge-on-device" : "badge-cloud";
     aiMsg.privacySummary = !isOnDevice ? privacySummary : "";
-    aiMsg.latencyText = `${res.ms} ms`;
+    aiMsg.latencyText = formatSec(res.ms);
     aiMsg.reason = reasonText;
     aiMsg.text = res.text;
+    if (task === "quiz") {
+      const parsedQuiz = parseQuizItems(res.text);
+      if (parsedQuiz) aiMsg.quizItems = parsedQuiz;
+    }
 
     if (task === "title" && res.text.trim()) {
       chat.title = res.text.trim().replace(/^["']|["']$/g, "").slice(0, 60);
@@ -814,9 +1109,24 @@ taskMenuBtn.addEventListener("click", (e) => {
   setPopoverOpen(taskPopover.hidden);
 });
 
+modelMenuBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setModelPopoverOpen(modelPopover.hidden);
+});
+
+modelOptBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    selectModel(btn.dataset.model);
+    setModelPopoverOpen(false);
+  });
+});
+
 document.addEventListener("click", (e) => {
   if (!taskPopover.hidden && !taskPopover.contains(e.target) && e.target !== taskMenuBtn) {
     setPopoverOpen(false);
+  }
+  if (modelPopover && !modelPopover.hidden && !modelPopover.contains(e.target) && !modelMenuBtn?.contains(e.target)) {
+    setModelPopoverOpen(false);
   }
 });
 

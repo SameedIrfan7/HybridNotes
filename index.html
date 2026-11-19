@@ -61,9 +61,9 @@
       </div>
 
       <div class="nav-right">
-        <span id="nano-status-pill" class="nano-status glass-pill" aria-live="polite">
+        <button id="nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
           Checking Nano…
-        </span>
+        </button>
         <label class="sim-offline-pill glass-pill" for="sim-offline-toggle">
           <input id="sim-offline-toggle" class="switch-input" type="checkbox" />
           <span>Simulate Offline</span>
@@ -303,9 +303,9 @@
 
         <section class="sidebar-device-card glass-subpanel mobile-only-block" aria-label="Device and network status">
           <div class="sidebar-device-label">Device &amp; Network</div>
-          <span id="mobile-nano-status-pill" class="nano-status glass-pill" aria-live="polite">
+          <button id="mobile-nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
             Checking Nano…
-          </span>
+          </button>
           <label class="sim-offline-pill glass-pill" for="mobile-sim-offline-toggle">
             <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
             <span>Simulate Offline</span>
@@ -359,29 +359,30 @@
               class="note-title-input"
               placeholder="New Study Chat"
             />
-            <button
-              id="rename-note-btn"
-              type="button"
-              class="pill-btn btn-ghost rename-btn"
-              aria-label="Rename chat"
-              title="Rename chat"
-            >
-              Rename
-            </button>
           </div>
 
           <div class="topbar-controls">
-            <label class="private-toggle glass-pill" for="private-toggle">
-              <input id="private-toggle" class="switch-input" type="checkbox" />
-              <span>Private (on-device only)</span>
-            </label>
+            <button
+              id="rename-note-btn"
+              type="button"
+              class="topbar-icon-btn"
+              aria-label="Rename chat"
+              title="Rename chat"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M13.5 3.5l3 3L6.5 16.5H3.5v-3L13.5 3.5z" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
             <button
               id="delete-note-btn"
               type="button"
-              class="btn-danger pill-btn"
-              aria-label="Delete current note"
+              class="topbar-icon-btn topbar-icon-danger"
+              aria-label="Delete chat"
+              title="Delete chat"
             >
-              Delete
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4.5 6h11M8 6V4.5h4V6M6.5 6l.7 9.5h5.6l.7-9.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </button>
           </div>
         </header>
@@ -476,6 +477,35 @@
                 <span id="char-count" class="mono">0 chars</span>
               </div>
               <div class="composer-actions">
+                <div id="model-popover" class="task-popover model-popover glass-panel" role="menu" aria-label="Select AI model" hidden>
+                  <div class="popover-section-label">Model Routing</div>
+                  <button type="button" class="model-opt popover-item active" data-model="auto" role="menuitemradio" aria-checked="true">
+                    <span>Auto · Smart Route</span>
+                  </button>
+                  <button type="button" class="model-opt popover-item" data-model="nano" role="menuitemradio" aria-checked="false">
+                    <span>Gemini Nano (On-device)</span>
+                  </button>
+                  <button type="button" class="model-opt popover-item" data-model="flash-lite" role="menuitemradio" aria-checked="false">
+                    <span>Gemini 3.5 Flash-Lite</span>
+                  </button>
+                  <label class="popover-private-row" for="private-toggle">
+                    <span>Private (on-device only)</span>
+                    <input id="private-toggle" class="switch-input" type="checkbox" />
+                  </label>
+                </div>
+                <button
+                  id="model-menu-btn"
+                  type="button"
+                  class="pill-btn model-menu-btn"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  title="Choose model"
+                >
+                  <span id="selected-model-chip">Auto</span>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 12l4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
                 <span id="run-timer" class="run-timer mono" hidden>0.0s</span>
                 <button
                   id="cancel-ai-btn"
@@ -650,6 +680,32 @@
         <button id="profile-tour-btn" type="button" class="pill-btn">Replay Quick Demo</button>
         <button id="profile-stats-btn" type="button" class="pill-btn">Routing &amp; Telemetry</button>
         <button id="profile-clear-btn" type="button" class="pill-btn btn-danger">Clear Local Data</button>
+      </div>
+    </dialog>
+
+    <dialog id="nano-download-modal" class="demo-modal glass-panel" aria-labelledby="nano-dl-title">
+      <div class="demo-header">
+        <span class="badge badge-on-device">Offline AI Setup</span>
+        <button id="nano-dl-close" type="button" class="pill-btn btn-ghost">Close</button>
+      </div>
+      <h2 id="nano-dl-title" class="demo-title">Download Gemini Nano for Offline Use?</h2>
+      <p class="demo-desc">
+        To use HybridNotes offline with zero mobile data, Chrome needs to download Gemini Nano
+        locally once (~1.5 GB, requires ~2 GB free disk space). If you skip, HybridNotes will
+        keep using Cloud Gemini 3.5 Flash-Lite whenever you're online.
+      </p>
+      <div id="nano-dl-progress-wrap" class="nano-dl-progress-wrap" hidden>
+        <div class="stat-label">
+          <span id="nano-dl-status-text">Downloading Gemini Nano…</span>
+          <span id="nano-dl-pct" class="mono">0%</span>
+        </div>
+        <div class="stat-track">
+          <div id="nano-dl-bar" class="stat-fill stat-fill-green" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="demo-footer">
+        <button id="nano-dl-skip" type="button" class="pill-btn btn-ghost">Use Cloud Only</button>
+        <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Download Once (~1.5 GB)</button>
       </div>
     </dialog>
 
