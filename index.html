@@ -358,43 +358,58 @@
     <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
 
     <div id="workspace-view" class="app-shell" hidden>
-      <aside id="sidebar" class="sidebar glass-panel" aria-label="Study notes">
+      <aside id="sidebar" class="sidebar glass-panel" aria-label="Study chats and device menu">
         <div class="sidebar-header">
-          <h2 class="sidebar-heading">Chats</h2>
-          <div class="sidebar-header-actions">
-            <button id="new-note-btn" type="button" class="btn-primary pill-btn">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M10 4v12M4 10h12" stroke-linecap="round" />
-              </svg>
-              <span>New Chat</span>
-            </button>
-            <button
-              id="close-drawer-btn"
-              type="button"
-              class="pill-btn btn-ghost mobile-only-btn"
-              aria-label="Close notes drawer"
-            >
-              Close
-            </button>
+          <div class="sidebar-brand">
+            <img src="/icon.svg" alt="" width="20" height="20" />
+            <span class="sidebar-brand-name">HybridNotes</span>
           </div>
+          <button
+            id="close-drawer-btn"
+            type="button"
+            class="topbar-icon-btn mobile-only-btn"
+            aria-label="Close menu"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
+            </svg>
+          </button>
         </div>
 
-        <section class="sidebar-device-card glass-subpanel mobile-only-block" aria-label="Device and network status">
-          <div class="sidebar-device-label">Device &amp; Network</div>
+        <nav class="sidebar-nav-list" aria-label="Quick actions">
+          <button id="new-note-btn" type="button" class="sidebar-nav-row">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M13.5 3.5l3 3L6.5 16.5H3.5v-3L13.5 3.5z" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>New chat</span>
+          </button>
+          <button id="sidebar-stats-btn" type="button" class="sidebar-nav-row">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M4 15V9M10 15V5M16 15v-4" stroke-linecap="round" />
+            </svg>
+            <span>Routing &amp; Telemetry</span>
+          </button>
+        </nav>
+
+        <section class="sidebar-section mobile-only-block" aria-label="Device and network status">
+          <div class="sidebar-section-label">Device &amp; Network</div>
           <button id="mobile-nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
             Checking Nano…
           </button>
-          <label class="sim-offline-pill glass-pill" for="mobile-sim-offline-toggle">
-            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
+          <label class="sidebar-switch-row" for="mobile-sim-offline-toggle">
             <span>Simulate Offline</span>
+            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
           </label>
         </section>
 
-        <ul id="note-list" class="note-list" role="listbox" aria-label="Saved notes"></ul>
+        <div class="sidebar-chats-group">
+          <div class="sidebar-section-label">Chats</div>
+          <ul id="note-list" class="note-list" role="listbox" aria-label="Saved chats"></ul>
+        </div>
 
         <section
           id="stats-card"
-          class="stats-card glass-subpanel"
+          class="stats-card glass-subpanel desktop-only-block"
           role="button"
           tabindex="0"
           aria-label="Open Routing Stats breakdown"
@@ -425,10 +440,22 @@
             </div>
           </div>
         </section>
+
+        <button id="sidebar-profile-btn" type="button" class="sidebar-profile-footer mobile-only-block" aria-label="Open profile and settings">
+          <span class="profile-avatar-btn sidebar-avatar" id="sidebar-avatar-initials">S</span>
+          <span class="sidebar-profile-meta">
+            <strong id="sidebar-profile-name">Student</strong>
+            <span>Local profile &amp; quota</span>
+          </span>
+          <svg class="sidebar-gear" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="10" cy="10" r="2.7" />
+            <path d="M10 3v1.6M10 15.4V17M3 10h1.6M15.4 10H17M5.1 5.1l1.1 1.1M13.8 13.8l1.1 1.1M14.9 5.1l-1.1 1.1M6.2 13.8l-1.1 1.1" stroke-linecap="round" />
+          </svg>
+        </button>
       </aside>
 
       <main class="workspace">
-        <header class="editor-topbar glass-panel">
+        <header class="editor-topbar">
           <div class="title-wrap">
             <label for="note-title" class="sr-only">Chat title</label>
             <input
@@ -542,7 +569,7 @@
               id="note-content"
               class="note-editor"
               rows="2"
-              placeholder="Paste lecture notes or ask a question... (Ctrl+Enter to Send)"
+              placeholder="Ask or paste study notes…"
             ></textarea>
             <div class="composer-footer">
               <div class="composer-left">
@@ -747,6 +774,10 @@
 
       <div class="profile-section glass-subpanel">
         <div class="profile-section-title">Device Storage &amp; Data Quota</div>
+        <p class="profile-data-note">
+          Notes and profile values are stored unencrypted in this browser's localStorage.
+          Private mode controls AI routing; clearing browser data removes local backups.
+        </p>
         <div class="profile-quota-row">
           <span id="profile-quota-summary" class="mono">0.0 KB / 5,120 KB localStorage</span>
           <span id="profile-chats-count" class="mono">0 chats · 0 messages</span>

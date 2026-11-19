@@ -16,7 +16,7 @@ import {
 } from "firebase/remote-config";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env?.VITE_FIREBASE_API_KEY,
   authDomain: "hybrid-3dd4b.firebaseapp.com",
   projectId: "hybrid-3dd4b",
   storageBucket: "hybrid-3dd4b.firebasestorage.app",
@@ -32,10 +32,10 @@ let ai = null;
 try {
   if (firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
-    if (import.meta.env.DEV) {
+    if (import.meta.env?.DEV) {
       self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     }
-    const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    const recaptchaSiteKey = import.meta.env?.VITE_RECAPTCHA_SITE_KEY;
     if (recaptchaSiteKey) {
       initializeAppCheck(app, {
         provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
@@ -44,7 +44,7 @@ try {
     }
     remoteConfig = getRemoteConfig(app);
     remoteConfig.defaultConfig = { on_device_max_chars: 1500 };
-    remoteConfig.settings.minimumFetchIntervalMillis = import.meta.env.DEV
+    remoteConfig.settings.minimumFetchIntervalMillis = import.meta.env?.DEV
       ? 60_000
       : 300_000;
     ai = getAI(app, { backend: new GoogleAIBackend() });
@@ -253,7 +253,7 @@ export function formatAIError(err, mode) {
   }
 
   if (
-    !navigator.onLine ||
+    (typeof navigator !== "undefined" && navigator.onLine === false) ||
     msg.includes("network") ||
     msg.includes("failed to fetch") ||
     msg.includes("offline")
@@ -433,8 +433,9 @@ export async function runAI({
 
   try {
     onStatus?.("Thinking & compiling response on Cloud Flash-Lite…");
+    const clean = sanitizeForCloud(prompt);
     const result = await withTimeout(
-      raceWithAbort(cloudModel.generateContent(prompt), signal),
+      raceWithAbort(cloudModel.generateContent(clean.sanitizedText), signal),
       30_000,
       "Cloud request timed out. Please check your connection and try again."
     );
@@ -446,6 +447,8 @@ export async function runAI({
       text: response.text(),
       source,
       ms,
+      privacySummary: source === "cloud" ? clean.summary : "",
+      maskedCount: source === "cloud" ? clean.maskedCount : 0,
     };
   } catch (err) {
     if (err?.name === "AbortError") throw err;

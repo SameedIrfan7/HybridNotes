@@ -4,7 +4,6 @@ import {
   getOnDeviceStatus,
   isMobileDevice,
   getMaxOnDeviceChars,
-  sanitizeForCloud,
   runChunkedOnDevice,
 } from "./ai.js";
 import { decideRoute } from "./router.js";
@@ -137,6 +136,10 @@ const profileExportBtn = document.getElementById("profile-export-btn");
 const profileTourBtn = document.getElementById("profile-tour-btn");
 const profileStatsBtn = document.getElementById("profile-stats-btn");
 const profileClearBtn = document.getElementById("profile-clear-btn");
+const sidebarStatsBtn = document.getElementById("sidebar-stats-btn");
+const sidebarProfileBtn = document.getElementById("sidebar-profile-btn");
+const sidebarAvatarInitials = document.getElementById("sidebar-avatar-initials");
+const sidebarProfileName = document.getElementById("sidebar-profile-name");
 
 const nanoDownloadModal = document.getElementById("nano-download-modal");
 const nanoDlClose = document.getElementById("nano-dl-close");
@@ -538,10 +541,30 @@ function getActiveNote() {
   return notes.find((n) => n.id === activeId) || null;
 }
 
+const TRASH_SVG =
+  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4.5 6h11M8 6V4.5h4V6M6.5 6l.7 9.5h5.6l.7-9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function deleteNoteById(id) {
+  if (notes.length === 1) {
+    notes[0] = createNote({ isPrivate: profile.defaultPrivate });
+    activeId = notes[0].id;
+  } else {
+    notes = notes.filter((n) => n.id !== id);
+    if (activeId === id || !notes.some((n) => n.id === activeId)) {
+      activeId = notes[0].id;
+    }
+  }
+  saveNotes();
+  renderAll();
+  renderProfile();
+}
+
 function renderSidebar() {
   noteListEl.innerHTML = "";
   for (const note of notes) {
     const li = document.createElement("li");
+    li.className = `note-row${note.id === activeId ? " active" : ""}`;
+
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `note-item${note.id === activeId ? " active" : ""}`;
@@ -552,7 +575,6 @@ function renderSidebar() {
       if (!homeView.hidden) showView("workspace");
       else setDrawerOpen(false);
       renderAll();
-renderProfile();
     });
 
     const titleSpan = document.createElement("span");
@@ -567,9 +589,70 @@ renderProfile();
       btn.appendChild(lock);
     }
 
-    li.appendChild(btn);
+    const rowActions = document.createElement("div");
+    rowActions.className = "note-row-actions";
+
+    const rowRenameBtn = document.createElement("button");
+    rowRenameBtn.type = "button";
+    rowRenameBtn.className = "note-row-btn";
+    rowRenameBtn.setAttribute("aria-label", "Rename chat");
+    rowRenameBtn.title = "Rename";
+    rowRenameBtn.innerHTML = EDIT_SVG;
+    rowRenameBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      activeId = note.id;
+      if (!homeView.hidden) showView("workspace");
+      else setDrawerOpen(false);
+      renderAll();
+      titleInput.focus();
+      titleInput.select();
+    });
+
+    const rowDeleteBtn = document.createElement("button");
+    rowDeleteBtn.type = "button";
+    rowDeleteBtn.className = "note-row-btn danger";
+    rowDeleteBtn.setAttribute("aria-label", "Delete chat");
+    rowDeleteBtn.title = "Delete";
+    rowDeleteBtn.innerHTML = TRASH_SVG;
+    rowDeleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteNoteById(note.id);
+    });
+
+    rowActions.append(rowRenameBtn, rowDeleteBtn);
+    li.append(btn, rowActions);
     noteListEl.appendChild(li);
   }
+}
+
+const COPY_SVG =
+  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="2"/><path d="M5 13H4a1.5 1.5 0 01-1.5-1.5v-7A1.5 1.5 0 014 3h7a1.5 1.5 0 011.5 1.5V6" stroke-linecap="round"/></svg>';
+const CHECK_SVG =
+  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const EDIT_SVG =
+  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13.5 3.5l3 3L6.5 16.5H3.5v-3L13.5 3.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function makeCopyBtn(getText) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "msg-action-icon";
+  btn.setAttribute("aria-label", "Copy message");
+  btn.title = "Copy";
+  btn.innerHTML = COPY_SVG;
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(getText());
+      btn.innerHTML = CHECK_SVG;
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.innerHTML = COPY_SVG;
+        btn.classList.remove("copied");
+      }, 1500);
+    } catch {
+      // Clipboard unavailable.
+    }
+  });
+  return btn;
 }
 
 function renderThread() {
@@ -634,6 +717,27 @@ function renderThread() {
         });
         bubble.appendChild(expandBtn);
       }
+
+      const userActions = document.createElement("div");
+      userActions.className = "msg-hover-actions";
+      userActions.appendChild(makeCopyBtn(() => msg.text));
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "msg-action-icon";
+      editBtn.setAttribute("aria-label", "Edit and reuse prompt");
+      editBtn.title = "Edit in composer";
+      editBtn.innerHTML = EDIT_SVG;
+      editBtn.addEventListener("click", () => {
+        contentInput.value = msg.text;
+        chat.draft = msg.text;
+        charCountEl.textContent = `${msg.text.trim().length} chars`;
+        autoResizeEditor();
+        saveNotes();
+        contentInput.focus();
+      });
+      userActions.appendChild(editBtn);
+      bubble.appendChild(userActions);
 
       chatThreadEl.appendChild(bubble);
     } else {
@@ -748,6 +852,13 @@ function renderThread() {
         }
         card.append(header, reason, body);
       }
+      if (msg.badgeText !== "Running..." && msg.text) {
+        const aiActions = document.createElement("div");
+        aiActions.className = "msg-hover-actions";
+        aiActions.appendChild(makeCopyBtn(() => msg.text));
+        card.appendChild(aiActions);
+      }
+
       chatThreadEl.appendChild(card);
     }
   }
@@ -1098,15 +1209,6 @@ async function handleRun() {
       extraReason = ` (Split into ${res.chunks} chunks on-device.)`;
     } else {
       let inputText = text;
-      const willUseCloudDirectly =
-        route.mode === "ONLY_IN_CLOUD" ||
-        route.mode === "PREFER_IN_CLOUD" ||
-        (route.mode === "PREFER_ON_DEVICE" && lastNanoStatus !== "available");
-      if (willUseCloudDirectly) {
-        const clean = sanitizeForCloud(text);
-        inputText = clean.sanitizedText;
-        privacySummary = clean.summary;
-      }
 
       let streamTarget = "";
       let streamShown = 0;
@@ -1177,6 +1279,7 @@ async function handleRun() {
     recordStat(res.source, res.ms, savedBytes);
 
     const isOnDevice = res.source === "on-device";
+    privacySummary = isOnDevice ? "" : (res.privacySummary || privacySummary);
     const reasonText =
       route.mode === "PREFER_ON_DEVICE" && !isOnDevice
         ? `${route.reason} (Fell back to cloud.)`
@@ -1282,15 +1385,7 @@ newNoteBtn.addEventListener("click", () => {
 });
 
 deleteNoteBtn.addEventListener("click", () => {
-  if (notes.length === 1) {
-    notes[0] = createNote();
-    activeId = notes[0].id;
-  } else {
-    notes = notes.filter((n) => n.id !== activeId);
-    activeId = notes[0].id;
-  }
-  saveNotes();
-  renderAll();
+  deleteNoteById(activeId);
 });
 
 renameNoteBtn?.addEventListener("click", () => {
@@ -1579,6 +1674,8 @@ function renderProfile() {
   const initials = getInitials(profile.name);
   if (profileAvatarInitials) profileAvatarInitials.textContent = initials;
   if (profileModalInitials) profileModalInitials.textContent = initials;
+  if (sidebarAvatarInitials) sidebarAvatarInitials.textContent = initials;
+  if (sidebarProfileName) sidebarProfileName.textContent = profile.name || "Student";
   if (profileNameInput && profileNameInput.value !== profile.name) {
     profileNameInput.value = profile.name;
   }
@@ -1620,6 +1717,16 @@ function renderProfile() {
 profileBtn?.addEventListener("click", () => {
   renderProfile();
   profileModal?.showModal();
+});
+sidebarProfileBtn?.addEventListener("click", () => {
+  setDrawerOpen(false);
+  renderProfile();
+  profileModal?.showModal();
+});
+sidebarStatsBtn?.addEventListener("click", () => {
+  setDrawerOpen(false);
+  renderStats();
+  statsModal?.showModal();
 });
 closeProfileModal?.addEventListener("click", () => profileModal?.close());
 profileModal?.addEventListener("click", (e) => {
