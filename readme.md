@@ -102,17 +102,22 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
    ```bash
    npm run dev
    ```
-4. Build the production bundle:
+4. Run the automated tests:
+   ```bash
+   npm test
+   ```
+   The current Node test suite covers routing guardrails, privacy/offline behavior, identifier masking, and friendly error formatting.
+5. Build the production bundle:
    ```bash
    npm run build
    npm run preview
    ```
-5. Deploy:
+6. Deploy:
    ```bash
    firebase deploy --only hosting
    ```
 
-The app currently has no dedicated automated test script or `tests/` directory. Routing and masking should be smoke-tested in the browser: run Private/offline requests, short and long notes, Deep Analyze, Translate, and JSON export.
+The automated tests do not cover the browser UI or Firebase service configuration. Also smoke-test Private/offline requests, short and long notes, Deep Analyze, Translate, and JSON export in the browser.
 
 ## Firebase configuration
 
