@@ -7,6 +7,12 @@ import {
   runChunkedOnDevice,
 } from "./ai.js";
 import { decideRoute } from "./router.js";
+import {
+  getDueStudyLoopItems,
+  getStudyLoopSummary,
+  recordReviewOutcome,
+  scheduleMissedQuizItem,
+} from "./study-loop.js";
 
 const NOTES_KEY = "hybridnotes_notes";
 const STATS_KEY = "hybridnotes_stats";
@@ -26,7 +32,7 @@ const DEFAULT_STATS = {
   onDeviceTotalMs: 0,
   cloudTotalMs: 0,
   cloudCallsAvoided: 0,
-  bytesSaved: 0,
+  estimatedTextBytes: 0,
 };
 
 const TASK_LABELS = {
@@ -64,6 +70,8 @@ const sidebar = document.getElementById("sidebar");
 
 const offlineBanner = document.getElementById("offline-banner");
 const noteListEl = document.getElementById("note-list");
+const studyLoopBtn = document.getElementById("study-loop-btn");
+const studyLoopCountEl = document.getElementById("study-loop-count");
 const newNoteBtn = document.getElementById("new-note-btn");
 const deleteNoteBtn = document.getElementById("delete-note-btn");
 const titleInput = document.getElementById("note-title");
@@ -103,6 +111,18 @@ const modalKbSaved = document.getElementById("modal-kb-saved");
 const modalThreshold = document.getElementById("modal-threshold");
 const modalOnDeviceDetail = document.getElementById("modal-ondevice-detail");
 const modalCloudDetail = document.getElementById("modal-cloud-detail");
+
+const studyLoopModal = document.getElementById("study-loop-modal");
+const closeStudyLoopBtn = document.getElementById("close-study-loop-btn");
+const studyLoopSummaryEl = document.getElementById("study-loop-summary");
+const studyLoopEmptyEl = document.getElementById("study-loop-empty");
+const studyReviewCardEl = document.getElementById("study-review-card");
+const studyReviewProgressEl = document.getElementById("study-review-progress");
+const studyReviewNoteEl = document.getElementById("study-review-note");
+const studyReviewQuestionEl = document.getElementById("study-review-question");
+const studyReviewOptionsEl = document.getElementById("study-review-options");
+const studyReviewFeedbackEl = document.getElementById("study-review-feedback");
+const studyReviewNextBtn = document.getElementById("study-review-next-btn");
 
 const demoModal = document.getElementById("demo-modal");
 const demoStepBadge = document.getElementById("demo-step-badge");
@@ -160,6 +180,8 @@ let selectedModel = "auto";
 let activeAbortController = null;
 let slideIndex = 0;
 let carouselPaused = false;
+let studyReviewQueue = [];
+let studyReviewIndex = 0;
 
 function makeId() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -406,13 +428,25 @@ function loadNotes() {
 
 function saveNotes() {
   localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  updateStudyLoopButton();
 }
 
 function loadStats() {
   try {
     const raw = localStorage.getItem(STATS_KEY);
     if (raw) {
-      return { ...DEFAULT_STATS, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return {
+          ...DEFAULT_STATS,
+          ...parsed,
+          estimatedTextBytes: Number.isFinite(parsed.estimatedTextBytes)
+            ? parsed.estimatedTextBytes
+            : Number.isFinite(parsed.bytesSaved)
+              ? parsed.bytesSaved
+              : 0,
+        };
+      }
     }
   } catch {
     // Ignore malformed stats.
@@ -424,12 +458,12 @@ function saveStats() {
   localStorage.setItem(STATS_KEY, JSON.stringify(stats));
 }
 
-function recordStat(source, ms, payloadBytes = 0) {
+function recordStat(source, ms, estimatedTextBytes = 0) {
   if (source === "on-device") {
     stats.onDeviceCount += 1;
     stats.onDeviceTotalMs += ms;
     stats.cloudCallsAvoided += 1;
-    stats.bytesSaved += payloadBytes;
+    stats.estimatedTextBytes += estimatedTextBytes;
   } else {
     stats.cloudCount += 1;
     stats.cloudTotalMs += ms;
@@ -448,9 +482,11 @@ function renderStats() {
   const cloudAvg = stats.cloudCount
     ? Math.round(stats.cloudTotalMs / stats.cloudCount)
     : null;
-  const kbSaved = (stats.bytesSaved / 1024).toFixed(1);
+  const estimatedKb = (stats.estimatedTextBytes / 1024).toFixed(1);
 
-  statsSummaryEl.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} avoided · ${kbSaved} KB saved`;
+  statsSummaryEl.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB text`;
+  statsSummaryEl.title =
+    "Estimated UTF-8 size of note and response text for on-device runs; not total network usage.";
   statOnDeviceMeta.textContent = `${stats.onDeviceCount} · ${onAvg !== null ? formatSec(onAvg) : "—"}`;
   statCloudMeta.textContent = `${stats.cloudCount} · ${cloudAvg !== null ? formatSec(cloudAvg) : "—"}`;
   statOnDeviceBar.style.width = `${onPct}%`;
@@ -458,7 +494,7 @@ function renderStats() {
 
   modalOnDevicePct.textContent = `${onPct}%`;
   modalAvoided.textContent = String(stats.cloudCallsAvoided);
-  modalKbSaved.textContent = `${kbSaved} KB`;
+  modalKbSaved.textContent = `~${estimatedKb} KB`;
   modalThreshold.textContent = `${maxOnDeviceChars} chars`;
   modalOnDeviceDetail.textContent = `${stats.onDeviceCount} runs · ${onAvg !== null ? `${formatSec(onAvg)} avg` : "—"}`;
   modalCloudDetail.textContent = `${stats.cloudCount} runs · ${cloudAvg !== null ? `${formatSec(cloudAvg)} avg` : "—"}`;
@@ -816,6 +852,9 @@ function renderThread() {
 
             optBtn.addEventListener("click", () => {
               item.selectedIndex = oIdx;
+              if (oIdx !== item.answerIndex && !item.review) {
+                scheduleMissedQuizItem(item);
+              }
               saveNotes();
               renderThread();
             });
@@ -828,7 +867,11 @@ function renderThread() {
             const fb = document.createElement("p");
             const gotIt = item.selectedIndex === item.answerIndex;
             fb.className = `quiz-feedback ${gotIt ? "correct" : "wrong"}`;
-            fb.textContent = `${gotIt ? "✓ Correct!" : `✗ Incorrect — Answer: ${String.fromCharCode(65 + item.answerIndex)}.`} ${item.explanation || ""}`;
+            const reviewNote =
+              !gotIt && item.review?.reviews === 0
+                ? ` Added to Study Loop · due ${formatReviewDate(item.review.dueAt)}.`
+                : "";
+            fb.textContent = `${gotIt ? "✓ Correct!" : `✗ Incorrect — Answer: ${String.fromCharCode(65 + item.answerIndex)}.`} ${item.explanation || ""}${reviewNote}`;
             qCard.appendChild(fb);
           }
 
@@ -881,14 +924,147 @@ function renderAll() {
   renderSidebar();
   renderEditor();
   renderStats();
+  updateStudyLoopButton();
 }
+
+function formatReviewDate(timestamp) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(timestamp));
+}
+
+function updateStudyLoopButton() {
+  if (!studyLoopBtn || !studyLoopCountEl) return;
+  const summary = getStudyLoopSummary(notes);
+  studyLoopCountEl.textContent = summary.due
+    ? `${summary.due} due`
+    : summary.upcoming
+      ? `${summary.upcoming} upcoming`
+      : "Start";
+  studyLoopBtn.setAttribute(
+    "aria-label",
+    summary.due
+      ? `Study Loop, ${summary.due} reviews due`
+      : summary.upcoming
+        ? `Study Loop, ${summary.upcoming} upcoming reviews`
+        : "Study Loop, no reviews scheduled"
+  );
+}
+
+function updateStudyLoopSummary() {
+  const summary = getStudyLoopSummary(notes);
+  if (summary.due) {
+    studyLoopSummaryEl.textContent =
+      `${summary.due} due now · ${summary.upcoming} scheduled · ` +
+      `${summary.completedReviews} reviews completed`;
+  } else if (summary.upcoming) {
+    studyLoopSummaryEl.textContent =
+      `No cards due right now. ${summary.upcoming} coming up; next due ` +
+      `${formatReviewDate(summary.nextDueAt)} · ${summary.completedReviews} reviews completed`;
+  } else {
+    studyLoopSummaryEl.textContent =
+      "No review cards yet. Miss a quiz question and it will return here tomorrow.";
+  }
+}
+
+function renderStudyReviewCard() {
+  const entry = studyReviewQueue[studyReviewIndex];
+  if (!entry) {
+    studyReviewCardEl.hidden = true;
+    studyLoopEmptyEl.hidden = false;
+    studyLoopEmptyEl.textContent = "Review session complete. Your next cards will appear when due.";
+    studyReviewProgressEl.textContent = "";
+    updateStudyLoopSummary();
+    return;
+  }
+
+  studyLoopEmptyEl.hidden = true;
+  studyReviewCardEl.hidden = false;
+  studyReviewProgressEl.textContent =
+    `Card ${studyReviewIndex + 1} of ${studyReviewQueue.length}`;
+  studyReviewNoteEl.textContent = entry.noteTitle;
+  studyReviewQuestionEl.textContent = entry.item.q;
+  studyReviewOptionsEl.replaceChildren();
+  studyReviewFeedbackEl.hidden = true;
+  studyReviewFeedbackEl.className = "quiz-feedback";
+  studyReviewNextBtn.hidden = true;
+
+  entry.item.options.forEach((option, optionIndex) => {
+    const optionBtn = document.createElement("button");
+    optionBtn.type = "button";
+    optionBtn.className = "quiz-opt-btn";
+    optionBtn.textContent = `${String.fromCharCode(65 + optionIndex)}. ${String(option)}`;
+    optionBtn.addEventListener("click", () => answerStudyReview(entry, optionIndex));
+    studyReviewOptionsEl.appendChild(optionBtn);
+  });
+}
+
+function answerStudyReview(entry, selectedIndex) {
+  if (studyReviewNextBtn.hidden === false) return;
+
+  const remembered = selectedIndex === entry.item.answerIndex;
+  const review = recordReviewOutcome(entry.item, remembered);
+  Array.from(studyReviewOptionsEl.children).forEach((button, optionIndex) => {
+    button.disabled = true;
+    if (optionIndex === entry.item.answerIndex) button.classList.add("is-correct");
+    else if (optionIndex === selectedIndex) button.classList.add("is-wrong");
+  });
+
+  studyReviewFeedbackEl.className = `quiz-feedback ${remembered ? "correct" : "wrong"}`;
+  studyReviewFeedbackEl.textContent = remembered
+    ? `Correct. Next review: ${formatReviewDate(review.dueAt)}. ${entry.item.explanation || ""}`
+    : `Not quite. This card is scheduled again for ${formatReviewDate(review.dueAt)}. ${entry.item.explanation || ""}`;
+  studyReviewFeedbackEl.hidden = false;
+  studyReviewNextBtn.textContent =
+    studyReviewIndex === studyReviewQueue.length - 1 ? "Finish review" : "Next card";
+  studyReviewNextBtn.hidden = false;
+
+  saveNotes();
+  renderStudyLoopSummary();
+  renderThread();
+}
+
+function renderStudyLoopSummary() {
+  updateStudyLoopSummary();
+  updateStudyLoopButton();
+}
+
+function openStudyLoop() {
+  setDrawerOpen(false);
+  studyReviewQueue = getDueStudyLoopItems(notes);
+  studyReviewIndex = 0;
+  updateStudyLoopSummary();
+  if (studyReviewQueue.length) {
+    renderStudyReviewCard();
+  } else {
+    studyReviewCardEl.hidden = true;
+    studyLoopEmptyEl.hidden = false;
+    const summary = getStudyLoopSummary(notes);
+    studyLoopEmptyEl.textContent = summary.upcoming
+      ? `No cards are due yet. Your next review is scheduled for ${formatReviewDate(summary.nextDueAt)}.`
+      : "No review cards yet. Miss a quiz question and it will return here tomorrow.";
+    studyReviewProgressEl.textContent = "";
+  }
+  studyLoopModal.showModal();
+}
+
+studyLoopBtn?.addEventListener("click", openStudyLoop);
+closeStudyLoopBtn?.addEventListener("click", () => studyLoopModal.close());
+studyReviewNextBtn?.addEventListener("click", () => {
+  studyReviewIndex += 1;
+  renderStudyReviewCard();
+});
+studyLoopModal?.addEventListener("click", (event) => {
+  if (event.target === studyLoopModal) studyLoopModal.close();
+});
 
 function updateOfflineBanner() {
   offlineBanner.hidden = !isAppOffline();
 }
 
 const HYBRIDNOTES_SELF_CONTEXT =
-  "You are the assistant inside HybridNotes, a private-by-default hybrid AI study notes PWA. HybridNotes routes short tasks, interactive Quiz Me MCQs, and Private/Offline notes to on-device Chrome Gemini Nano (0 KB data), and routes longer or deep tasks to Cloud Gemini 3.5 Flash-Lite after masking emails, phone numbers, and student IDs locally. All chats, stats, and profiles are stored locally in the user's browser (localStorage).";
+  "You are the assistant inside HybridNotes, a private-by-default hybrid AI study notes PWA. HybridNotes routes supported tasks and Private/Offline notes to on-device Chrome Gemini Nano when available, and routes longer or deep tasks to Cloud Gemini 3.5 Flash-Lite after masking common identifiers locally. All chats, stats, and profiles are stored locally in the user's browser (localStorage).";
 
 function inferAutoIntent(text) {
   const t = text.trim().toLowerCase();
@@ -1112,7 +1288,7 @@ async function handleRun() {
   if (!route.blocked && selectedModel === "nano") {
     route = {
       mode: "ONLY_ON_DEVICE",
-      reason: "Model set to Gemini Nano (on-device only, 0 KB data).",
+      reason: "Model set to Gemini Nano (prompt processed on-device only).",
     };
   } else if (!route.blocked && selectedModel === "flash-lite") {
     if (chat.isPrivate || isAppOffline()) {
@@ -1275,8 +1451,8 @@ async function handleRun() {
       }
     }
 
-    const savedBytes = new Blob([text, res.text]).size;
-    recordStat(res.source, res.ms, savedBytes);
+    const estimatedTextBytes = new Blob([text, res.text]).size;
+    recordStat(res.source, res.ms, estimatedTextBytes);
 
     const isOnDevice = res.source === "on-device";
     privacySummary = isOnDevice ? "" : (res.privacySummary || privacySummary);
@@ -1522,13 +1698,13 @@ const DEMO_STEPS = [
   {
     badge: "Step 1 of 3",
     title: "1. Paste your notes & tap Send",
-    desc: "Type or paste any class note below and tap Send. Short notes stay right on your device.",
+    desc: "Type or paste class notes and tap Send. With Gemini Nano available, supported short tasks can run on-device.",
     pill: "Summarize · On-Device",
     inputLabel: "YOU TYPE",
     typed: "Photosynthesis turns sunlight, water, and CO2 into glucose and oxygen inside chloroplasts.",
     outBadge: "On-device",
     outBadgeClass: "badge-on-device",
-    outStat: "240 ms · 0 KB data",
+    outStat: "240 ms · prompt stays local",
     outText: "• Plants use sunlight + water + CO2 to make glucose.\n• Happens inside chloroplasts and releases oxygen.",
   },
   {
@@ -1708,9 +1884,9 @@ function renderProfile() {
 
   const totalRuns = stats.onDeviceCount + stats.cloudCount;
   const onPct = totalRuns ? Math.round((stats.onDeviceCount / totalRuns) * 100) : 0;
-  const savedKb = (stats.bytesSaved / 1024).toFixed(1);
+  const estimatedKb = (stats.estimatedTextBytes / 1024).toFixed(1);
   if (profileSavingsLine) {
-    profileSavingsLine.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ${savedKb} KB mobile data saved`;
+    profileSavingsLine.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB note + response text processed locally`;
   }
 }
 

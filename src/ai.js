@@ -311,7 +311,7 @@ async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, o
   }
 
   try {
-    onStatus?.("Thinking on Gemini Nano (0 KB data)…");
+    onStatus?.("Prompt is being processed on-device by Gemini Nano…");
     if (typeof session.promptStreaming === "function") {
       const stream = session.promptStreaming(prompt, { signal });
       let fullText = "";

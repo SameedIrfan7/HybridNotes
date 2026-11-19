@@ -11,9 +11,10 @@ A **private-by-default, installable PWA** for AI study notes that routes prompts
 - **Identifier masking**: Locally masks email addresses, recognizable phone numbers, and numeric sequences of six or more digits before a cloud request. The result shows a per-response masking summary.
 - **Long-note local processing**: Long Private or offline summaries and to-do extraction are split into 1,200-character chunks and processed one chunk at a time on-device.
 - **Interactive Quiz Me**: Parses generated multiple-choice questions, provides A-D answer controls, grading, explanations, and stores the resulting quiz scores in local statistics.
+- **Study Loop**: Incorrect quiz answers return as review cards the next day. Correct recall spaces the next review at 3, 7, then 14 days; missed reviews return the next day. Schedule and progress are stored with local notes.
 - **Local history and backup**: Notes, title, profile, tour state, and statistics persist in browser `localStorage`. Profile settings offer JSON export and a clear-data action.
 - **Installable PWA**: Includes a web app manifest, icons, and a service worker cache for the app shell. Firebase Hosting deployment rewrites app routes to `index.html`.
-- **Routing observability**: Displays the selected route, source, latency, privacy summary, and per-run reason; Profile and Stats views show on-device/cloud usage and avoided cloud calls.
+- **Routing observability**: Displays the selected route, source, latency, privacy summary, and per-run reason. Stats estimate the UTF-8 size of note plus response text handled by on-device runs; they do not measure total network traffic or model-download data.
 
 ## Routing map
 
@@ -73,8 +74,9 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
 - `index.html` — Landing page, workspace UI, guided demo, profile, and telemetry dialogs
 - `src/ai.js` — Firebase setup, App Check, Remote Config, Nano Prompt API streaming, masking, and cloud execution
 - `src/router.js` — Pure routing decision engine
-- `src/main.js` — Chat state, intent detection, prompts, Quiz Me parsing, JSON export, and statistics
-- `src/style.css` — Responsive PWA styling
+- `src/main.js` — Chat state, intent detection, prompts, Quiz Me UI, Study Loop, JSON export, and statistics
+- `src/study-loop.js` — Local spaced-review scheduling and due-card selection
+- `src/style.css` — Responsive PWA and Study Loop styling
 - `public/sw.js` — Service worker for app-shell caching
 - `public/manifest.webmanifest` and `public/icon.svg` — PWA metadata and icon
 - `firebase.json` — Firebase Hosting configuration
@@ -106,7 +108,7 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
    ```bash
    npm test
    ```
-   The current Node test suite covers routing guardrails, privacy/offline behavior, identifier masking, and friendly error formatting.
+   The current Node test suite covers routing guardrails, privacy/offline behavior, identifier masking, friendly error formatting, and Study Loop scheduling.
 5. Build the production bundle:
    ```bash
    npm run build

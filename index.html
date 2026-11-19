@@ -19,7 +19,7 @@
     <div class="bg-backdrop" aria-hidden="true"></div>
 
     <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
-      Offline mode — AI runs strictly on-device with zero mobile data used.
+      Offline mode — AI requests are locked to on-device inference.
     </div>
 
     <nav class="top-nav glass-panel" aria-label="Primary navigation">
@@ -91,9 +91,9 @@
         </span>
         <h1 class="landing-title">Study notes that know when to stay on your device.</h1>
         <p class="landing-sub">
-          Built for students on patchy Wi-Fi and limited mobile data. Summaries, flashcards, and
-          Private notes run locally in Chrome; deep analysis uses the cloud with sensitive
-          identifiers masked first.
+          Built for students on patchy Wi-Fi and limited mobile data. When Gemini Nano is
+          available, supported summaries, flashcards, and Private notes can run locally in Chrome;
+          cloud tasks mask common sensitive identifiers first.
         </p>
         <div class="landing-cta-row">
           <button id="launch-workspace-btn" type="button" class="btn-primary pill-btn btn-lg">
@@ -126,11 +126,11 @@
             <div class="mockup-pane glass-subpanel">
               <div class="mockup-label-row">
                 <span class="badge badge-on-device">On-device</span>
-                <span class="mono mockup-ms">Example · 0.3s · 0 KB</span>
+                <span class="mono mockup-ms">Example · 0.3s · prompt stays local</span>
               </div>
               <p class="mockup-text">
-                Short note (&lt; 1500 chars): routed locally to Chrome Gemini Nano—no mobile data
-                used.
+                Short note (&lt; 1500 chars): routed locally to Chrome Gemini Nano; the AI prompt
+                is not sent to cloud inference.
               </p>
             </div>
           </div>
@@ -203,7 +203,7 @@
               </div>
             </div>
             <h3>Live Thresholds &amp; Stats</h3>
-            <p>Tune routing thresholds via Firebase Remote Config and track cloud calls avoided plus KB saved.</p>
+            <p>Tune routing thresholds via Firebase Remote Config and track routes plus estimated local note and response text size.</p>
           </article>
         </div>
       </section>
@@ -215,8 +215,8 @@
             <h2 class="process-heading">Why Gemini Nano + Cloud Flash-Lite work better together.</h2>
           </div>
           <p class="process-sub">
-            Normal AI apps send every single word to the cloud. HybridNotes splits the job so you get
-            offline privacy on-device and fast reasoning in the cloud only when needed.
+            Cloud-based AI features use remote inference when selected. HybridNotes can keep supported
+            prompts on-device with Gemini Nano and uses cloud inference for tasks that need it.
           </p>
         </div>
 
@@ -227,11 +227,11 @@
                 <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
                 Gemini Nano (On-Device)
               </span>
-              <span class="mono process-cost hl-green">0 KB data · Offline</span>
+              <span class="mono process-cost hl-green">Prompt stays on-device</span>
             </div>
             <p>
-              Runs locally inside Chrome with zero internet. Handles short notes, <strong>Auto</strong> questions,
-              <strong>Quiz Me</strong> flashcards, grammar fixes, and <strong>Private</strong> chats without touching a server.
+              After Gemini Nano is available, supported prompts are processed locally in Chrome. The first model download requires connectivity.
+              It can handle short notes, <strong>Auto</strong> questions, <strong>Quiz Me</strong>, grammar fixes, and <strong>Private</strong> chats.
             </p>
           </div>
 
@@ -251,7 +251,7 @@
         </div>
 
         <div class="process-diagram-wrap" aria-label="End-to-end routing process">
-          <svg class="process-svg" viewBox="0 0 920 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1. Write or Ask, 2. Smart Router checks Private, Offline and length, 3. Gemini Nano (0 KB) or Masked Cloud Flash-Lite, 4. Saved locally on your device">
+          <svg class="process-svg" viewBox="0 0 920 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1. Write or Ask, 2. Smart Router checks Private, Offline and length, 3. Gemini Nano processes locally or masked Cloud Flash-Lite, 4. Saved locally on your device">
             <rect x="6" y="14" width="194" height="100" rx="16" fill="#140a0a" stroke="rgba(246,239,230,0.16)" stroke-width="1.5"/>
             <text x="24" y="42" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">01 · INPUT</text>
             <text x="24" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Write or Ask</text>
@@ -271,7 +271,7 @@
             <rect x="488" y="14" width="210" height="100" rx="16" fill="#0f1714" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
             <text x="506" y="42" fill="#34d399" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">03 · INFERENCE</text>
             <text x="506" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Nano or Cloud</text>
-            <text x="506" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">0 KB local or masked cloud</text>
+            <text x="506" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Local prompt or masked cloud</text>
 
             <path d="M704 64H734" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
             <path d="M728 58L735 64L728 70" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.7"/>
@@ -286,13 +286,13 @@
 
       <section class="compare-strip glass-panel reveal-drop" aria-label="How HybridNotes compares">
         <div class="compare-item">
-          <span class="compare-label">Cloud-Only Notes Apps</span>
-          <p>Send every prompt to paid servers, stop working when Wi-Fi drops, and hide data usage.</p>
+          <span class="compare-label">Cloud-Based AI Notes</span>
+          <p>Cloud-based AI features typically need an internet connection; data handling and usage details depend on each provider.</p>
         </div>
         <div class="compare-divider" aria-hidden="true"></div>
         <div class="compare-item compare-item-accent">
           <span class="compare-label hl-red-bright">HybridNotes</span>
-          <p>Runs short tasks, flashcards, and Private notes on-device, masks identifiers before cloud, and shows every route.</p>
+          <p>When Gemini Nano is available, selected tasks can run on-device. HybridNotes also offers Private/offline routing and shows when a response uses cloud AI.</p>
         </div>
       </section>
 
@@ -302,11 +302,21 @@
             <article class="carousel-slide">
               <div class="slide-quote">
                 <span class="badge badge-on-device">Quiz Me (Flashcards)</span>
-                <p>Turn any lecture note into 3–4 Q&amp;A flashcards on-device with zero mobile data spent.</p>
+                <p>Turn lecture notes into 3–4 questions; when Gemini Nano is available, prompts are processed on-device.</p>
               </div>
               <div class="slide-stat">
-                <strong class="mono hl-green">0 KB</strong>
-                <span>mobile data for on-device study</span>
+                <strong class="mono hl-green">Local AI</strong>
+                <span>prompt stays on-device with Nano</span>
+              </div>
+            </article>
+            <article class="carousel-slide">
+              <div class="slide-quote">
+                <span class="badge badge-on-device">Study Loop</span>
+                <p>Missed quiz questions return for review tomorrow, then at wider intervals as you remember them.</p>
+              </div>
+              <div class="slide-stat">
+                <strong class="mono hl-green">1 · 3 · 7 · 14</strong>
+                <span>day review intervals, stored locally</span>
               </div>
             </article>
             <article class="carousel-slide">
@@ -383,6 +393,14 @@
             </svg>
             <span>New chat</span>
           </button>
+          <button id="study-loop-btn" type="button" class="sidebar-nav-row">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M16.5 6.5A7 7 0 104 15.8M16.5 6.5V2.8m0 3.7h-3.7" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M10 6v4l2.5 1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Study Loop</span>
+            <span id="study-loop-count" class="study-loop-count">Start</span>
+          </button>
           <button id="sidebar-stats-btn" type="button" class="sidebar-nav-row">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
               <path d="M4 15V9M10 15V5M16 15v-4" stroke-linecap="round" />
@@ -419,7 +437,7 @@
             <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset</button>
           </div>
           <p id="stats-summary" class="stats-summary">
-            0% on-device · 0 avoided · 0.0 KB saved
+            0% on-device · 0 cloud calls avoided · ~0.0 KB text
           </p>
           <div class="stat-row">
             <div class="stat-label">
@@ -669,14 +687,17 @@
           <strong id="modal-avoided" class="kpi-value mono">0</strong>
         </div>
         <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">Mobile Data Saved</span>
-          <strong id="modal-kb-saved" class="kpi-value mono">0.0 KB</strong>
+          <span class="kpi-label">Estimated Text Processed Locally*</span>
+          <strong id="modal-kb-saved" class="kpi-value mono">~0.0 KB</strong>
         </div>
         <div class="modal-kpi glass-subpanel">
           <span class="kpi-label">Remote Threshold</span>
           <strong id="modal-threshold" class="kpi-value mono">1500 chars</strong>
         </div>
       </div>
+      <p class="modal-subtitle metric-disclaimer">
+        Approximate UTF-8 size of the note and response text for on-device runs; this does not measure total network traffic or model-download data.
+      </p>
 
       <div class="modal-latency-grid">
         <div class="modal-kpi glass-subpanel">
@@ -698,6 +719,34 @@
           <li><strong>Short Simple Tasks (&lt; threshold) → Prefer On-Device:</strong> Summarize, Quiz Me, Grammar, Title, and To-dos run locally first and fall back to cloud if needed.</li>
         </ul>
       </div>
+    </dialog>
+
+    <dialog id="study-loop-modal" class="demo-modal glass-panel study-loop-modal" aria-labelledby="study-loop-title">
+      <div class="demo-header">
+        <span class="badge badge-on-device">Local · Spaced Review</span>
+        <button id="close-study-loop-btn" type="button" class="pill-btn btn-ghost" aria-label="Close Study Loop">
+          Close
+        </button>
+      </div>
+      <h2 id="study-loop-title" class="demo-title">Study Loop</h2>
+      <p id="study-loop-summary" class="demo-desc" aria-live="polite">
+        Miss a quiz question and it will return here tomorrow.
+      </p>
+      <div id="study-loop-empty" class="study-loop-empty">
+        No review cards yet. Miss a quiz question and it will return here tomorrow.
+      </div>
+      <section id="study-review-card" class="quiz-card study-review-card" aria-labelledby="study-review-question" hidden>
+        <div class="study-review-meta">
+          <span id="study-review-note" class="badge badge-on-device"></span>
+          <span id="study-review-progress" class="mono"></span>
+        </div>
+        <h3 id="study-review-question" class="quiz-q"></h3>
+        <div id="study-review-options" class="quiz-options"></div>
+        <p id="study-review-feedback" class="quiz-feedback" aria-live="polite" hidden></p>
+        <button id="study-review-next-btn" type="button" class="btn-primary pill-btn study-review-next" hidden>
+          Next card
+        </button>
+      </section>
     </dialog>
 
     <dialog id="demo-modal" class="demo-modal glass-panel" aria-labelledby="demo-step-title">
@@ -724,7 +773,7 @@
           <div id="demo-output-box" class="demo-output-box">
             <div class="demo-output-meta">
               <span id="demo-out-badge" class="badge badge-on-device">On-device</span>
-              <span id="demo-out-stat" class="mono">0 KB data</span>
+              <span id="demo-out-stat" class="mono">Prompt stays on-device</span>
             </div>
             <p id="demo-out-text" class="demo-out-text"></p>
           </div>
@@ -786,7 +835,10 @@
           <div id="profile-quota-bar" class="stat-fill stat-fill-green" style="width: 1%"></div>
         </div>
         <p id="profile-savings-line" class="profile-savings-line">
-          0% on-device · 0 cloud calls avoided · 0.0 KB mobile data saved
+          0% on-device · 0 cloud calls avoided · ~0.0 KB text processed locally
+        </p>
+        <p class="profile-data-note">
+          Estimated from note and response text size for on-device runs; it is not a measurement of total network traffic.
         </p>
       </div>
 
@@ -805,9 +857,10 @@
       </div>
       <h2 id="nano-dl-title" class="demo-title">Download Gemini Nano for Offline Use?</h2>
       <p class="demo-desc">
-        To use HybridNotes offline with zero mobile data, Chrome needs to download Gemini Nano
-        locally once (requires about 22 GB free disk space). If you skip, HybridNotes will
-        keep using Cloud Gemini 3.5 Flash-Lite whenever you're online.
+        To use HybridNotes offline, Chrome needs to download Gemini Nano once while connected
+        (the download uses network data and requires about 22 GB free disk space). After setup,
+        supported prompts can be processed locally. If you skip, HybridNotes will keep using
+        Cloud Gemini 3.5 Flash-Lite whenever you're online.
       </p>
       <div id="nano-dl-progress-wrap" class="nano-dl-progress-wrap" hidden>
         <div class="stat-label">

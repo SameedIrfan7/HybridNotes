@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tests/router.test.mjs"
+    "test": "node --test tests/router.test.mjs tests/study-loop.test.mjs"
   },
   "devDependencies": {
     "vite": "^8.3.6"
