@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -80,6 +80,15 @@
         >
           <span id="profile-avatar-initials">S</span>
         </button>
+        <button type="button" class="theme-toggle theme-toggle-nav" aria-label="Switch to light theme" title="Switch to light theme">
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+          </svg>
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+          </svg>
+        </button>
       </div>
     </nav>
 
@@ -87,13 +96,21 @@
       <header class="landing-hero">
         <span class="hero-pill glass-pill">
           <span class="brand-dot" aria-hidden="true"></span>
-          <span>Hybrid AI Study Notes · Works Offline</span>
+          <span>Study tools that work online or offline</span>
         </span>
-        <h1 class="landing-title">Study notes that know when to stay on your device.</h1>
+        <h1 class="landing-title" aria-label="Learn better. Remember more.">
+          <span class="landing-title-line">
+            <span class="landing-title-tile tile-red">Learn</span>
+            <span class="landing-title-tile tile-cream">better.</span>
+          </span>
+          <span class="landing-title-line">
+            <span class="landing-title-tile tile-red">Remember</span>
+            <span class="landing-title-tile tile-blue">more.</span>
+          </span>
+        </h1>
         <p class="landing-sub">
-          Built for students on patchy Wi-Fi and limited mobile data. When Gemini Nano is
-          available, supported summaries, flashcards, and Private notes can run locally in Chrome;
-          cloud tasks mask common sensitive identifiers first.
+          Turn class notes into quizzes, summaries, and review cards. Supported tasks can stay on your
+          device; cloud tasks mask common identifiers first.
         </p>
         <div class="landing-cta-row">
           <button id="launch-workspace-btn" type="button" class="btn-primary pill-btn btn-lg">
@@ -102,36 +119,80 @@
               <path d="M4 10h12M11 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
-          <a href="#how-it-works" class="pill-btn btn-lg">How It Works</a>
+          <a href="#experience-section" class="pill-btn btn-lg">Try a sample</a>
         </div>
 
-        <div class="hero-mockup glass-panel reveal-drop" aria-label="HybridNotes live routing preview">
+        <div class="hero-mockup glass-panel reveal-drop" aria-label="Animated example of how HybridNotes routes a note">
           <div class="mockup-bar">
             <span class="mockup-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="mono mockup-url">hybridnotes · PWA</span>
-            <span class="badge badge-on-device"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Example · On-device</span>
+            <span class="mono mockup-url">HOW A NOTE MOVES</span>
+            <span class="route-demo-caption">
+              <span class="route-demo-pulse" aria-hidden="true"></span>
+              Animated example · not a live request
+            </span>
           </div>
-          <div class="mockup-grid">
-            <div class="mockup-pane glass-subpanel">
-              <div class="mockup-label mono">NOTE · 197 CHARS · PRIVATE OFF</div>
-              <p class="mockup-text">
-                Cellular respiration converts glucose into ATP across glycolysis, the Krebs cycle,
-                and oxidative phosphorylation.
-              </p>
-              <div class="mockup-chips">
-                <span class="badge badge-on-device">Summarize</span>
-                <span class="badge badge-on-device">Quiz Me</span>
+          <div class="route-demo-sequence">
+            <article class="route-demo-step">
+              <span class="route-demo-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                  <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" />
+                </svg>
+              </span>
+              <div class="route-demo-step-copy">
+                <span class="route-demo-step-label">01 · YOUR NOTE</span>
+                <h3>Write what you learned.</h3>
+                <p>“Cells turn glucose into energy.”</p>
               </div>
-            </div>
-            <div class="mockup-pane glass-subpanel">
-              <div class="mockup-label-row">
-                <span class="badge badge-on-device">On-device</span>
-                <span class="mono mockup-ms">Example · 0.3s · prompt stays local</span>
+            </article>
+            <span class="route-demo-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12h15m-6-6 6 6-6 6" />
+              </svg>
+            </span>
+            <article class="route-demo-step">
+              <span class="route-demo-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="6" cy="6" r="2" />
+                  <circle cx="18" cy="18" r="2" />
+                  <path d="M8 6h5a3 3 0 0 1 3 3v6M6 8v7a3 3 0 0 0 3 3h7" />
+                </svg>
+              </span>
+              <div class="route-demo-step-copy">
+                <span class="route-demo-step-label">02 · SMART CHECK</span>
+                <h3>Pick the right route.</h3>
+                <p>Task · length · Private · Offline</p>
               </div>
-              <p class="mockup-text">
-                Short note (&lt; 1500 chars): routed locally to Chrome Gemini Nano; the AI prompt
-                is not sent to cloud inference.
-              </p>
+            </article>
+            <span class="route-demo-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12h15m-6-6 6 6-6 6" />
+              </svg>
+            </span>
+            <article class="route-demo-step">
+              <span class="route-demo-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="3" width="16" height="13" rx="2" />
+                  <path d="M2.5 20h19M9 16l-1 4m7-4 1 4M9 8l2 2 4-4" />
+                </svg>
+              </span>
+              <div class="route-demo-step-copy">
+                <span class="route-demo-step-label">03 · EXAMPLE RESULT</span>
+                <h3>Keep this prompt local.</h3>
+                <p>Gemini Nano · when available</p>
+              </div>
+            </article>
+          </div>
+          <div class="route-demo-outcome">
+            <span class="route-demo-outcome-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 5 6v5c0 4.5 2.9 8.3 7 10 4.1-1.7 7-5.5 7-10V6l-7-3Z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </span>
+            <div>
+              <span class="route-demo-outcome-label">YOUR CHOICE, EVERY TIME</span>
+              <p>Private or offline notes stay on your device. Cloud tasks mask common identifiers first.</p>
             </div>
           </div>
         </div>
@@ -144,12 +205,12 @@
       <section id="how-it-works" class="bento-section">
         <div class="bento-header reveal-drop">
           <div class="flow-pills" aria-label="Hybrid workflow steps">
-            <span class="pill-btn flow-pill active">1. Write Locally</span>
-            <span class="pill-btn flow-pill">2. Mask Identifiers</span>
-            <span class="pill-btn flow-pill">3. Smart Route</span>
-            <span class="pill-btn flow-pill">4. See Every Metric</span>
+            <span class="pill-btn flow-pill active">1. Write notes</span>
+            <span class="pill-btn flow-pill">2. Protect identifiers</span>
+            <span class="pill-btn flow-pill">3. Choose a route</span>
+            <span class="pill-btn flow-pill">4. See usage</span>
           </div>
-          <h2 class="bento-heading">How HybridNotes handles your notes.</h2>
+          <h2 class="bento-heading">What HybridNotes does with your notes.</h2>
         </div>
 
         <div class="bento-grid">
@@ -167,14 +228,14 @@
               </div>
             </div>
             <h3>Identifier Redaction</h3>
-            <p>Emails, phone numbers, and student IDs are masked locally before any cloud request, with a live privacy report.</p>
+            <p>Before a cloud request, emails, phone numbers, and student IDs are masked on your device.</p>
           </article>
 
           <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 90ms">
             <div class="bento-preview cream-grid-surface">
               <div class="mini-card cream-mini">
                 <div class="mini-row">
-                  <span class="badge badge-cream-dark"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Map-Reduce</span>
+                  <span class="badge badge-cream-dark"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Long notes · Local</span>
                   <span class="mono">1,200 chars/chunk</span>
                 </div>
                 <div class="mini-code mono">
@@ -184,8 +245,8 @@
                 </div>
               </div>
             </div>
-            <h3>Offline Map-Reduce</h3>
-            <p>Long lectures marked Private or run offline split into 1,200-char chunks and summarize locally on Nano.</p>
+            <h3>Summarize long notes offline</h3>
+            <p>Private or offline notes are split into short parts, summarized on Gemini Nano, then joined back on your device.</p>
           </article>
 
           <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 180ms">
@@ -202,8 +263,76 @@
                 </div>
               </div>
             </div>
-            <h3>Live Thresholds &amp; Stats</h3>
-            <p>Tune routing thresholds via Firebase Remote Config and track routes plus estimated local note and response text size.</p>
+            <h3>Clear routing and usage stats</h3>
+            <p>See which tasks ran locally or in the cloud, how long they took, and an estimate of text processed locally.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="experience-section" class="experience-section glass-panel reveal-drop" aria-labelledby="experience-title">
+        <header class="experience-header">
+          <div>
+            <span class="badge badge-on-device">Two things to try</span>
+            <h2 id="experience-title" class="experience-title">See it. Try it. Make it yours.</h2>
+            <p class="experience-intro">
+              Answer a sample question to see how reviews are spaced. Change the theme to make your notes easier to read.
+            </p>
+          </div>
+        </header>
+
+        <div class="experience-grid">
+          <article class="experience-card glass-subpanel" aria-labelledby="study-loop-demo-title">
+            <div class="experience-card-header">
+              <span class="badge badge-on-device">Study Loop</span>
+              <span class="mono experience-kicker">Sample · not saved</span>
+            </div>
+            <h3 id="study-loop-demo-title" class="experience-card-title">Try a review question</h3>
+            <p class="study-loop-demo-question">Which cell part makes most of its usable energy?</p>
+            <div id="study-loop-demo-options" class="quiz-options" role="group" aria-label="Sample answer choices">
+              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="false">The nucleus</button>
+              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="true">The mitochondrion</button>
+              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="false">The ribosome</button>
+            </div>
+            <p id="study-loop-demo-feedback" class="quiz-feedback" role="status" aria-live="polite" hidden></p>
+            <button id="study-loop-demo-reset" type="button" class="pill-btn btn-ghost experience-reset" hidden>
+              Try the sample again
+            </button>
+            <ol class="study-loop-timeline" aria-label="Study Loop review schedule">
+              <li><span>Miss a quiz answer</span><strong>Review tomorrow</strong></li>
+              <li><span>Remember it</span><strong>Next in 3 days</strong></li>
+              <li><span>Keep remembering</span><strong>7, then 14 days</strong></li>
+            </ol>
+            <button id="study-loop-demo-start-btn" type="button" class="btn-primary pill-btn experience-cta">
+              Make my own quiz →
+            </button>
+          </article>
+
+          <article class="experience-card glass-subpanel" aria-labelledby="theme-demo-title">
+            <div class="experience-card-header">
+              <span class="badge badge-cloud">Reading theme</span>
+              <span class="mono experience-kicker">Saved on this device</span>
+            </div>
+            <div class="theme-demo-heading">
+              <div>
+                <h3 id="theme-demo-title" class="experience-card-title">Choose light or dark.</h3>
+                <p class="theme-demo-copy">Tap the sun or moon to change the whole page.</p>
+              </div>
+              <button type="button" class="theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
+                <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+                </svg>
+                <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+                </svg>
+              </button>
+            </div>
+            <div class="theme-demo-preview">
+              <span class="mono">YOUR NOTES</span>
+              <strong>Comfortable reading, your way.</strong>
+              <p>Your theme choice stays saved when you come back.</p>
+            </div>
+            <p class="theme-demo-footnote">The sample quiz is just a demo. Your real review cards stay on this device.</p>
           </article>
         </div>
       </section>
@@ -212,11 +341,11 @@
         <div class="process-top">
           <div>
             <span class="badge badge-on-device">Inside the Engine</span>
-            <h2 class="process-heading">Why Gemini Nano + Cloud Flash-Lite work better together.</h2>
+            <h2 class="process-heading">Local when you want it. Cloud when a task needs it.</h2>
           </div>
           <p class="process-sub">
-            Cloud-based AI features use remote inference when selected. HybridNotes can keep supported
-            prompts on-device with Gemini Nano and uses cloud inference for tasks that need it.
+            Short supported tasks can stay on your device with Gemini Nano. For tasks that need cloud AI,
+            common identifiers are masked before the request.
           </p>
         </div>
 
@@ -227,11 +356,11 @@
                 <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
                 Gemini Nano (On-Device)
               </span>
-              <span class="mono process-cost hl-green">Prompt stays on-device</span>
+              <span class="mono process-cost hl-emphasis">Prompt stays on-device</span>
             </div>
             <p>
-              After Gemini Nano is available, supported prompts are processed locally in Chrome. The first model download requires connectivity.
-              It can handle short notes, <strong>Auto</strong> questions, <strong>Quiz Me</strong>, grammar fixes, and <strong>Private</strong> chats.
+              When Chrome provides Gemini Nano, supported short tasks can run on your device. The first model download needs internet.
+              Private or offline chats stay on-device.
             </p>
           </div>
 
@@ -244,8 +373,8 @@
               <span class="mono process-cost hl-red-bright">Fast (~4s) · Masked</span>
             </div>
             <p>
-              Acts like a standard fast cloud AI model for <strong>Deep Analyze</strong>, <strong>Translate</strong>,
-              and long lectures—after masking emails, phone numbers, and student IDs locally first.
+              Use cloud AI for <strong>Deep Analyze</strong>, <strong>Translate</strong>, and long tasks.
+              Emails, phone numbers, and student IDs are masked on your device first.
             </p>
           </div>
         </div>
@@ -265,11 +394,11 @@
             <text x="260" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Check Rules</text>
             <text x="260" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Private · Offline · Length</text>
 
-            <path d="M452 64H482" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
-            <path d="M476 58L483 64L476 70" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M452 64H482" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round"/>
+            <path d="M476 58L483 64L476 70" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-            <rect x="488" y="14" width="210" height="100" rx="16" fill="#0f1714" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
-            <text x="506" y="42" fill="#34d399" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">03 · INFERENCE</text>
+            <rect x="488" y="14" width="210" height="100" rx="16" fill="#140a0a" stroke="rgba(255,46,59,0.45)" stroke-width="1.5"/>
+            <text x="506" y="42" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">03 · INFERENCE</text>
             <text x="506" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Nano or Cloud</text>
             <text x="506" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Local prompt or masked cloud</text>
 
@@ -286,13 +415,13 @@
 
       <section class="compare-strip glass-panel reveal-drop" aria-label="How HybridNotes compares">
         <div class="compare-item">
-          <span class="compare-label">Cloud-Based AI Notes</span>
-          <p>Cloud-based AI features typically need an internet connection; data handling and usage details depend on each provider.</p>
+          <span class="compare-label">Cloud AI study tools</span>
+          <p>Cloud features need an internet connection. Each provider handles data and reports usage differently.</p>
         </div>
         <div class="compare-divider" aria-hidden="true"></div>
         <div class="compare-item compare-item-accent">
           <span class="compare-label hl-red-bright">HybridNotes</span>
-          <p>When Gemini Nano is available, selected tasks can run on-device. HybridNotes also offers Private/offline routing and shows when a response uses cloud AI.</p>
+          <p>When Gemini Nano is available, supported tasks can run on your device. HybridNotes shows when a task uses cloud AI.</p>
         </div>
       </section>
 
@@ -302,27 +431,27 @@
             <article class="carousel-slide">
               <div class="slide-quote">
                 <span class="badge badge-on-device">Quiz Me (Flashcards)</span>
-                <p>Turn lecture notes into 3–4 questions; when Gemini Nano is available, prompts are processed on-device.</p>
+                <p>Turn class notes into a few quick questions. Supported prompts can stay on your device.</p>
               </div>
               <div class="slide-stat">
-                <strong class="mono hl-green">Local AI</strong>
+                <strong class="mono hl-emphasis">Local AI</strong>
                 <span>prompt stays on-device with Nano</span>
               </div>
             </article>
             <article class="carousel-slide">
               <div class="slide-quote">
                 <span class="badge badge-on-device">Study Loop</span>
-                <p>Missed quiz questions return for review tomorrow, then at wider intervals as you remember them.</p>
+                <p>Miss one? Review it tomorrow. Remember it? Your next reviews spread out.</p>
               </div>
               <div class="slide-stat">
-                <strong class="mono hl-green">1 · 3 · 7 · 14</strong>
+                <strong class="mono hl-emphasis">1 · 3 · 7 · 14</strong>
                 <span>day review intervals, stored locally</span>
               </div>
             </article>
             <article class="carousel-slide">
               <div class="slide-quote">
                 <span class="badge badge-cloud">Identifier Redaction</span>
-                <p>Emails, phone numbers, and student IDs are masked locally with a per-result privacy report.</p>
+                <p>Common identifiers are hidden on your device before cloud AI gets the prompt.</p>
               </div>
               <div class="slide-stat">
                 <strong class="mono hl-red-bright">Masked</strong>
@@ -332,10 +461,10 @@
             <article class="carousel-slide">
               <div class="slide-quote">
                 <span class="badge badge-on-device">Installable PWA</span>
-                <p>Works offline as a desktop or mobile app with a slide-out drawer and one-click Offline Simulator.</p>
+                <p>Install HybridNotes and keep your notes close, even when your connection drops.</p>
               </div>
               <div class="slide-stat">
-                <strong class="mono hl-green">Offline</strong>
+                <strong class="mono hl-emphasis">Offline</strong>
                 <span>app shell &amp; localStorage notes</span>
               </div>
             </article>
@@ -357,7 +486,8 @@
       <footer class="landing-footer reveal-drop">
         <div class="footer-brand">
           <img src="/icon.svg" alt="" width="18" height="18" />
-          <span>HybridNotes · Apache-2.0 Open Source · Local-first study notes</span>
+          <span class="footer-tagline">Learn better. Remember more.</span>
+          <span class="footer-meta">HybridNotes · Apache-2.0 open-source study notes</span>
         </div>
         <button id="footer-launch-btn" type="button" class="pill-btn btn-ghost">
           Open Workspace →
@@ -459,17 +589,24 @@
           </div>
         </section>
 
-        <button id="sidebar-profile-btn" type="button" class="sidebar-profile-footer mobile-only-block" aria-label="Open profile and settings">
-          <span class="profile-avatar-btn sidebar-avatar" id="sidebar-avatar-initials">S</span>
-          <span class="sidebar-profile-meta">
-            <strong id="sidebar-profile-name">Student</strong>
-            <span>Local profile &amp; quota</span>
-          </span>
-          <svg class="sidebar-gear" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-            <circle cx="10" cy="10" r="2.7" />
-            <path d="M10 3v1.6M10 15.4V17M3 10h1.6M15.4 10H17M5.1 5.1l1.1 1.1M13.8 13.8l1.1 1.1M14.9 5.1l-1.1 1.1M6.2 13.8l-1.1 1.1" stroke-linecap="round" />
-          </svg>
-        </button>
+        <div class="sidebar-profile-footer mobile-only-block">
+          <button id="sidebar-profile-btn" type="button" class="sidebar-profile-action" aria-label="Open local profile and settings">
+            <span class="profile-avatar-btn sidebar-avatar" id="sidebar-avatar-initials">S</span>
+            <span class="sidebar-profile-meta">
+              <strong id="sidebar-profile-name">Student</strong>
+              <span>Local profile &amp; quota</span>
+            </span>
+          </button>
+          <button type="button" class="theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+            </svg>
+          </button>
+        </div>
       </aside>
 
       <main class="workspace">
@@ -728,13 +865,16 @@
           Close
         </button>
       </div>
-      <h2 id="study-loop-title" class="demo-title">Study Loop</h2>
+      <h2 id="study-loop-title" class="demo-title">Review what you missed</h2>
       <p id="study-loop-summary" class="demo-desc" aria-live="polite">
-        Miss a quiz question and it will return here tomorrow.
+        Miss a quiz question and it returns tomorrow. Get it right and reviews move to 3, 7, then 14 days.
       </p>
       <div id="study-loop-empty" class="study-loop-empty">
-        No review cards yet. Miss a quiz question and it will return here tomorrow.
+        No review cards yet. Make a Quiz Me set, then miss an answer to start your review plan.
       </div>
+      <button id="study-loop-create-quiz-btn" type="button" class="btn-primary pill-btn study-loop-create-quiz" hidden>
+        Create a Quiz Me set →
+      </button>
       <section id="study-review-card" class="quiz-card study-review-card" aria-labelledby="study-review-question" hidden>
         <div class="study-review-meta">
           <span id="study-review-note" class="badge badge-on-device"></span>

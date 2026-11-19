@@ -18,6 +18,29 @@ const NOTES_KEY = "hybridnotes_notes";
 const STATS_KEY = "hybridnotes_stats";
 const TOUR_KEY = "hybridnotes_tour_done";
 const PROFILE_KEY = "hybridnotes_profile";
+const THEME_KEY = "hybridnotes_theme";
+const themeToggleBtns = document.querySelectorAll(".theme-toggle");
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
+function applyTheme(theme) {
+  const isLight = theme === "light";
+  document.documentElement.dataset.theme = isLight ? "light" : "dark";
+  themeColorMeta?.setAttribute("content", isLight ? "#f5f7fb" : "#070505");
+  const label = `Switch to ${isLight ? "dark" : "light"} theme`;
+  themeToggleBtns.forEach((button) => {
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  });
+}
+
+applyTheme(localStorage.getItem(THEME_KEY));
+themeToggleBtns.forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    localStorage.setItem(THEME_KEY, nextTheme);
+    applyTheme(nextTheme);
+  });
+});
 
 const DEFAULT_PROFILE = {
   name: "Student",
@@ -116,6 +139,7 @@ const studyLoopModal = document.getElementById("study-loop-modal");
 const closeStudyLoopBtn = document.getElementById("close-study-loop-btn");
 const studyLoopSummaryEl = document.getElementById("study-loop-summary");
 const studyLoopEmptyEl = document.getElementById("study-loop-empty");
+const studyLoopCreateQuizBtn = document.getElementById("study-loop-create-quiz-btn");
 const studyReviewCardEl = document.getElementById("study-review-card");
 const studyReviewProgressEl = document.getElementById("study-review-progress");
 const studyReviewNoteEl = document.getElementById("study-review-note");
@@ -139,6 +163,10 @@ const demoDots = document.getElementById("demo-dots");
 const demoPrevBtn = document.getElementById("demo-prev-btn");
 const demoNextBtn = document.getElementById("demo-next-btn");
 const demoSkipBtn = document.getElementById("demo-skip-btn");
+const studyLoopDemoOptions = document.querySelectorAll(".study-loop-demo-option");
+const studyLoopDemoFeedback = document.getElementById("study-loop-demo-feedback");
+const studyLoopDemoResetBtn = document.getElementById("study-loop-demo-reset");
+const studyLoopDemoStartBtn = document.getElementById("study-loop-demo-start-btn");
 
 const profileBtn = document.getElementById("profile-btn");
 const profileAvatarInitials = document.getElementById("profile-avatar-initials");
@@ -956,15 +984,13 @@ function updateStudyLoopSummary() {
   const summary = getStudyLoopSummary(notes);
   if (summary.due) {
     studyLoopSummaryEl.textContent =
-      `${summary.due} due now · ${summary.upcoming} scheduled · ` +
-      `${summary.completedReviews} reviews completed`;
+      `${summary.due} due now · ${summary.upcoming} coming up · ` +
+      `${summary.completedReviews} reviews finished`;
   } else if (summary.upcoming) {
     studyLoopSummaryEl.textContent =
-      `No cards due right now. ${summary.upcoming} coming up; next due ` +
-      `${formatReviewDate(summary.nextDueAt)} · ${summary.completedReviews} reviews completed`;
+      `All caught up. ${summary.upcoming} coming up; next review ${formatReviewDate(summary.nextDueAt)}.`;
   } else {
-    studyLoopSummaryEl.textContent =
-      "No review cards yet. Miss a quiz question and it will return here tomorrow.";
+    studyLoopSummaryEl.textContent = "Miss a quiz answer to add it here for review tomorrow.";
   }
 }
 
@@ -973,12 +999,19 @@ function renderStudyReviewCard() {
   if (!entry) {
     studyReviewCardEl.hidden = true;
     studyLoopEmptyEl.hidden = false;
-    studyLoopEmptyEl.textContent = "Review session complete. Your next cards will appear when due.";
+    const summary = getStudyLoopSummary(notes);
+    studyLoopCreateQuizBtn.hidden = summary.due > 0 || summary.upcoming > 0;
+    studyLoopEmptyEl.textContent = summary.upcoming
+      ? `Review complete. Your next card is due ${formatReviewDate(summary.nextDueAt)}.`
+      : summary.completedReviews
+        ? "Review complete. You are all caught up."
+        : "No review cards yet. Create a Quiz Me set and miss an answer to start.";
     studyReviewProgressEl.textContent = "";
     updateStudyLoopSummary();
     return;
   }
 
+  studyLoopCreateQuizBtn.hidden = true;
   studyLoopEmptyEl.hidden = true;
   studyReviewCardEl.hidden = false;
   studyReviewProgressEl.textContent =
@@ -1041,16 +1074,56 @@ function openStudyLoop() {
     studyReviewCardEl.hidden = true;
     studyLoopEmptyEl.hidden = false;
     const summary = getStudyLoopSummary(notes);
+    studyLoopCreateQuizBtn.hidden = summary.upcoming > 0;
     studyLoopEmptyEl.textContent = summary.upcoming
-      ? `No cards are due yet. Your next review is scheduled for ${formatReviewDate(summary.nextDueAt)}.`
-      : "No review cards yet. Miss a quiz question and it will return here tomorrow.";
+      ? `You're all caught up. Your next review is ${formatReviewDate(summary.nextDueAt)}.`
+      : "No review cards yet. Create a Quiz Me set, then miss an answer to start.";
     studyReviewProgressEl.textContent = "";
   }
   studyLoopModal.showModal();
 }
 
+function startQuizInWorkspace() {
+  if (studyLoopModal?.open) studyLoopModal.close();
+  showView("workspace");
+  selectTask("quiz");
+  if (!demoModal?.open) contentInput.focus();
+}
+
+function resetStudyLoopDemo() {
+  studyLoopDemoOptions.forEach((option) => {
+    option.disabled = false;
+    option.classList.remove("is-correct", "is-wrong");
+  });
+  studyLoopDemoFeedback.hidden = true;
+  studyLoopDemoFeedback.textContent = "";
+  studyLoopDemoFeedback.className = "quiz-feedback study-loop-demo-feedback";
+  studyLoopDemoResetBtn.hidden = true;
+}
+
+studyLoopDemoOptions.forEach((option) => {
+  option.addEventListener("click", () => {
+    const remembered = option.dataset.correct === "true";
+    studyLoopDemoOptions.forEach((choice) => {
+      choice.disabled = true;
+      if (choice.dataset.correct === "true") choice.classList.add("is-correct");
+      else if (choice === option) choice.classList.add("is-wrong");
+    });
+    studyLoopDemoFeedback.className =
+      `quiz-feedback study-loop-demo-feedback ${remembered ? "correct" : "wrong"}`;
+    studyLoopDemoFeedback.textContent = remembered
+      ? "That's right. Next review: 3 days; later it spaces out to 7, then 14 days."
+      : "Not quite. This question would return tomorrow. The answer is the mitochondrion.";
+    studyLoopDemoFeedback.hidden = false;
+    studyLoopDemoResetBtn.hidden = false;
+  });
+});
+
+studyLoopDemoResetBtn?.addEventListener("click", resetStudyLoopDemo);
+studyLoopDemoStartBtn?.addEventListener("click", startQuizInWorkspace);
 studyLoopBtn?.addEventListener("click", openStudyLoop);
 closeStudyLoopBtn?.addEventListener("click", () => studyLoopModal.close());
+studyLoopCreateQuizBtn?.addEventListener("click", startQuizInWorkspace);
 studyReviewNextBtn?.addEventListener("click", () => {
   studyReviewIndex += 1;
   renderStudyReviewCard();
