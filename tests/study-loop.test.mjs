@@ -5,6 +5,7 @@ import {
   recordReviewOutcome,
   getStudyLoopSummary,
   getDueStudyLoopItems,
+  getWeakSpotItems,
 } from "../src/study-loop.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -85,4 +86,17 @@ test("summarizes due vs upcoming items and sorts due queue oldest-first", () => 
   assert.equal(queue.length, 2);
   assert.equal(queue[0].item.q, "Due older");
   assert.equal(queue[1].item.q, "Due newer");
+});
+test("getWeakSpotItems returns stage-0 or unreviewed items even before dueAt", () => {
+  const now = 1_700_000_000_000;
+  const itemA = { q: "Q1", options: ["A", "B"], answerIndex: 0 };
+  const itemB = { q: "Q2", options: ["A", "B"], answerIndex: 1 };
+  scheduleMissedQuizItem(itemA, now);
+  scheduleMissedQuizItem(itemB, now);
+  recordReviewOutcome(itemB, true, now); // stage 1 (mastered past stage 0)
+
+  const notes = [{ title: "Bio", messages: [{ quizItems: [itemA, itemB] }] }];
+  const weak = getWeakSpotItems(notes);
+  assert.equal(weak.length, 1);
+  assert.equal(weak[0].item.q, "Q1");
 });

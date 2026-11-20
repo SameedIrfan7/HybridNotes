@@ -9,7 +9,9 @@ import {
 import { decideRoute } from "./router.js";
 import {
   getDueStudyLoopItems,
+  getStudyLoopItems,
   getStudyLoopSummary,
+  getWeakSpotItems,
   recordReviewOutcome,
   scheduleMissedQuizItem,
 } from "./study-loop.js";
@@ -56,6 +58,7 @@ const DEFAULT_STATS = {
   cloudTotalMs: 0,
   cloudCallsAvoided: 0,
   estimatedTextBytes: 0,
+  totalMaskedCount: 0,
 };
 
 const TASK_LABELS = {
@@ -465,7 +468,11 @@ function loadNotes() {
 }
 
 function saveNotes() {
-  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  try {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  } catch (err) {
+    console.warn("Storage quota reached while saving notes:", err);
+  }
   updateStudyLoopButton();
 }
 
@@ -496,7 +503,7 @@ function saveStats() {
   localStorage.setItem(STATS_KEY, JSON.stringify(stats));
 }
 
-function recordStat(source, ms, estimatedTextBytes = 0) {
+function recordStat(source, ms, estimatedTextBytes = 0, maskedCount = 0) {
   if (source === "on-device") {
     stats.onDeviceCount += 1;
     stats.onDeviceTotalMs += ms;
@@ -505,6 +512,7 @@ function recordStat(source, ms, estimatedTextBytes = 0) {
   } else {
     stats.cloudCount += 1;
     stats.cloudTotalMs += ms;
+    stats.totalMaskedCount = (stats.totalMaskedCount || 0) + (maskedCount || 0);
   }
   saveStats();
   renderStats();
@@ -536,10 +544,25 @@ function renderStats() {
   modalThreshold.textContent = `${maxOnDeviceChars} chars`;
   modalOnDeviceDetail.textContent = `${stats.onDeviceCount} runs · ${onAvg !== null ? `${formatSec(onAvg)} avg` : "—"}`;
   modalCloudDetail.textContent = `${stats.cloudCount} runs · ${cloudAvg !== null ? `${formatSec(cloudAvg)} avg` : "—"}`;
+  const modalMaskedEl = document.getElementById("modal-masked-total");
+  const compareOnEl = document.getElementById("compare-ondevice-stats");
+  const compareCloudEl = document.getElementById("compare-cloud-stats");
+  const maskedTotal = stats.totalMaskedCount || 0;
+  if (modalMaskedEl) {
+    modalMaskedEl.textContent = `${maskedTotal} PII ${maskedTotal === 1 ? "identifier" : "identifiers"} masked locally`;
+  }
+  if (compareOnEl) {
+    compareOnEl.textContent = `${stats.onDeviceCount} runs · ${onAvg !== null ? `${formatSec(onAvg)} avg` : "—"}`;
+  }
+  if (compareCloudEl) {
+    compareCloudEl.textContent = `${stats.cloudCount} runs · ${cloudAvg !== null ? `${formatSec(cloudAvg)} avg` : "—"}`;
+  }
 }
 
 const GEMINI_SPARKLE_SVG =
   '<svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>';
+const DEVICE_CHIP_SVG =
+  '<svg class="inline-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>';
 
 let lastNanoStatus = "unavailable";
 
@@ -551,17 +574,17 @@ async function refreshNanoStatus() {
   for (const pill of pills) {
     pill.classList.remove("nano-ready", "nano-warn", "nano-clickable");
     if (status === "available") {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Gemini Nano ready</span>`;
+      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>Offline AI ready</span>`;
       pill.classList.add("nano-ready");
     } else if (status === "downloading" && !mobile) {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Downloading Nano…</span>`;
+      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>Downloading Offline AI…</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
     } else if (status === "downloadable" && !mobile) {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Enable Offline AI</span>`;
+      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>Enable Offline AI</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
-      pill.title = "Click to download Gemini Nano once (about 22 GB free space needed)";
+      pill.title = "Click to download the ~2–4 GB offline model once";
     } else {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Cloud AI ready (PII masked) · On-device unavailable</span>`;
+      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>Cloud AI ready (PII masked) · On-device unavailable</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
       pill.title = "Click to see why on-device AI is unavailable here";
     }
@@ -592,7 +615,7 @@ function openNanoDownloadModal() {
   if (lastNanoStatus !== "downloadable" && lastNanoStatus !== "downloading") return;
   setDrawerOpen(false);
   nanoDlConfirm.disabled = false;
-  nanoDlConfirm.textContent = "Download Once (~22 GB free)";
+  nanoDlConfirm.textContent = "Enable Offline AI (~2–4 GB)";
   nanoDlProgressWrap.hidden = lastNanoStatus !== "downloading";
   nanoDownloadModal.showModal();
 }
@@ -834,7 +857,15 @@ function renderThread() {
       textEl.className = `chat-msg-text${isLong ? " is-collapsed" : ""}`;
       textEl.textContent = msg.text;
 
-      bubble.append(meta, textEl);
+      bubble.append(meta);
+      if (msg.attachment?.dataUrl) {
+        const imgEl = document.createElement("img");
+        imgEl.className = "msg-attachment-img";
+        imgEl.src = msg.attachment.dataUrl;
+        imgEl.alt = msg.attachment.name || "Attached study image";
+        bubble.appendChild(imgEl);
+      }
+      bubble.append(textEl);
 
       if (isLong) {
         const expandBtn = document.createElement("button");
@@ -991,6 +1022,32 @@ function renderThread() {
           body.innerHTML = renderMarkdownSafe(msg.text || "");
         }
         card.append(header, reason, body);
+        if (msg.badgeClass === "badge-cloud" && msg.sanitizedPrompt) {
+          const proofWrap = document.createElement("div");
+          proofWrap.className = "privacy-proof-wrap";
+
+          const proofBtn = document.createElement("button");
+          proofBtn.type = "button";
+          proofBtn.className = "privacy-proof-pill";
+          proofBtn.setAttribute("aria-expanded", "false");
+          proofBtn.textContent = msg.privacySummary
+            ? `Privacy Proof · ${msg.privacySummary}`
+            : "Privacy Proof · View cloud payload";
+
+          const proofBox = document.createElement("pre");
+          proofBox.className = "privacy-proof-box mono";
+          proofBox.hidden = true;
+          proofBox.textContent = msg.sanitizedPrompt;
+
+          proofBtn.addEventListener("click", () => {
+            const nextHidden = !proofBox.hidden;
+            proofBox.hidden = nextHidden;
+            proofBtn.setAttribute("aria-expanded", String(!nextHidden));
+          });
+
+          proofWrap.append(proofBtn, proofBox);
+          card.appendChild(proofWrap);
+        }
 
         if (msg.badgeText === "Error" && /gemini nano|on-device/i.test(msg.text || "")) {
           const errActions = document.createElement("div");
@@ -1155,24 +1212,40 @@ function renderStudyLoopSummary() {
   updateStudyLoopButton();
 }
 
-function openStudyLoop() {
+function refreshStudyLoopToolbar() {
+  const weakBtn = document.getElementById("study-loop-weak-btn");
+  const exportAnkiLoopBtn = document.getElementById("study-loop-export-anki-btn");
+  const weakItems = getWeakSpotItems(notes);
+  const allItems = getStudyLoopItems(notes);
+  if (weakBtn) {
+    weakBtn.hidden = weakItems.length === 0;
+    weakBtn.textContent = `Weak-Spot Drill (${weakItems.length}) · Offline`;
+  }
+  if (exportAnkiLoopBtn) {
+    exportAnkiLoopBtn.hidden = allItems.length === 0;
+  }
+}
+
+function openStudyLoop({ weakSpotOnly = false } = {}) {
   setDrawerOpen(false);
-  studyReviewQueue = getDueStudyLoopItems(notes);
+  studyReviewQueue = weakSpotOnly ? getWeakSpotItems(notes) : getDueStudyLoopItems(notes);
   studyReviewIndex = 0;
   updateStudyLoopSummary();
+  refreshStudyLoopToolbar();
   if (studyReviewQueue.length) {
     renderStudyReviewCard();
   } else {
     studyReviewCardEl.hidden = true;
     studyLoopEmptyEl.hidden = false;
     const summary = getStudyLoopSummary(notes);
+    const weakItems = getWeakSpotItems(notes);
     studyLoopCreateQuizBtn.hidden = summary.upcoming > 0;
     studyLoopEmptyEl.textContent = summary.upcoming
-      ? `You're all caught up. Your next review is ${formatReviewDate(summary.nextDueAt)}.`
+      ? `You're all caught up. Your next review is ${formatReviewDate(summary.nextDueAt)}.${weakItems.length ? " Use Weak-Spot Drill above to practice missed cards offline anytime." : ""}`
       : "No review cards yet. Create a Quiz Me set, then miss an answer to start.";
     studyReviewProgressEl.textContent = "";
   }
-  studyLoopModal.showModal();
+  if (!studyLoopModal.open) studyLoopModal.showModal();
 }
 
 function startQuizInWorkspace() {
@@ -1430,14 +1503,16 @@ async function handleRun() {
   if (!chat || activeAbortController) return;
   setPopoverOpen(false);
 
-  const text = contentInput.value.trim();
+  const rawText = contentInput.value.trim();
+  const attachment = pendingAttachment ? { ...pendingAttachment } : null;
+  const text = rawText || (attachment ? "Summarize this study image and highlight key concepts." : "");
   const task = selectedTask;
   const taskLabel =
     task === "translate"
       ? `Translate (${translateLangEl.value})`
       : TASK_LABELS[task] || "Prompt";
 
-  if (!text) {
+  if (!text && !attachment) {
     contentInput.focus();
     return;
   }
@@ -1480,8 +1555,10 @@ async function handleRun() {
     role: "user",
     taskLabel,
     text,
+    attachment: attachment ? { name: attachment.name, dataUrl: attachment.dataUrl } : null,
     createdAt: Date.now(),
   };
+  clearPendingAttachment();
 
   chat.messages.push(userMsg);
   chat.draft = "";
@@ -1600,6 +1677,7 @@ async function handleRun() {
       try {
         res = await runAI({
           prompt: buildPrompt(task, inputText, chat),
+          image: attachment,
           mode: route.mode,
           signal,
           onStatus: updateLiveStatus,
@@ -1617,7 +1695,7 @@ async function handleRun() {
     }
 
     const estimatedTextBytes = new Blob([text, res.text]).size;
-    recordStat(res.source, res.ms, estimatedTextBytes);
+    recordStat(res.source, res.ms, estimatedTextBytes, res.maskedCount || 0);
 
     const isOnDevice = res.source === "on-device";
     privacySummary = isOnDevice ? "" : (res.privacySummary || privacySummary);
@@ -1629,6 +1707,7 @@ async function handleRun() {
     aiMsg.badgeText = isOnDevice ? "Gemini Nano" : "Gemini 3.5 Flash-Lite";
     aiMsg.badgeClass = isOnDevice ? "badge-on-device" : "badge-cloud";
     aiMsg.privacySummary = !isOnDevice ? privacySummary : "";
+    aiMsg.sanitizedPrompt = !isOnDevice ? (res.sanitizedPrompt || "") : "";
     aiMsg.latencyText = formatSec(res.ms);
     aiMsg.reason = reasonText;
     aiMsg.text = res.text;
@@ -2179,3 +2258,213 @@ showView("home");
 updateOfflineBanner();
 updateSelectedChip();
 renderAll();
+
+// === Composer File & Image Drop / Paste ===
+let pendingAttachment = null;
+const editorWrapEl = document.getElementById("editor-wrap");
+const attachmentPreviewEl = document.getElementById("attachment-preview");
+const attachmentThumbEl = document.getElementById("attachment-thumb");
+const attachmentNameEl = document.getElementById("attachment-name");
+const attachmentRemoveBtn = document.getElementById("attachment-remove-btn");
+const attachFileBtn = document.getElementById("attach-file-btn");
+const attachFileInput = document.getElementById("attach-file-input");
+
+function clearPendingAttachment() {
+  pendingAttachment = null;
+  if (attachmentPreviewEl) attachmentPreviewEl.hidden = true;
+  if (attachmentThumbEl) {
+    attachmentThumbEl.hidden = true;
+    attachmentThumbEl.removeAttribute("src");
+  }
+  if (attachmentNameEl) attachmentNameEl.textContent = "";
+  if (attachFileInput) attachFileInput.value = "";
+}
+
+async function handleIncomingFile(file) {
+  if (!file) return;
+  const isText =
+    file.type.startsWith("text/") || /\.(txt|md|markdown|csv)$/i.test(file.name || "");
+  if (isText) {
+    const fileText = (await file.text()).trim();
+    if (!fileText) return;
+    const prefix = contentInput.value.trim() ? `${contentInput.value.trim()}\n\n` : "";
+    contentInput.value = `${prefix}${fileText}`;
+    const chat = getActiveNote();
+    if (chat) {
+      chat.draft = contentInput.value;
+      saveNotes();
+    }
+    charCountEl.textContent = `${contentInput.value.trim().length} chars`;
+    autoResizeEditor();
+    contentInput.focus();
+    return;
+  }
+
+  if (file.type.startsWith("image/")) {
+    const resizeToJpeg = (img, maxDim, quality) => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", quality);
+    };
+
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = async () => {
+      try {
+        const aiDataUrl = resizeToJpeg(img, 1280, 0.82);
+        const thumbDataUrl = resizeToJpeg(img, 240, 0.7);
+        const base64 = aiDataUrl.includes(",") ? aiDataUrl.split(",")[1] : "";
+        const aiBlob = await (await fetch(aiDataUrl)).blob();
+        pendingAttachment = {
+          name: file.name || "study-image.jpg",
+          mimeType: "image/jpeg",
+          dataUrl: thumbDataUrl,
+          base64,
+          blob: aiBlob,
+        };
+        if (attachmentThumbEl) {
+          attachmentThumbEl.src = thumbDataUrl;
+          attachmentThumbEl.hidden = false;
+        }
+        if (attachmentNameEl) {
+          attachmentNameEl.textContent = `${pendingAttachment.name} (${Math.max(1, Math.round(aiBlob.size / 1024))} KB)`;
+        }
+        if (attachmentPreviewEl) attachmentPreviewEl.hidden = false;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    img.src = objectUrl;
+  }
+}
+
+attachFileBtn?.addEventListener("click", () => attachFileInput?.click());
+attachFileInput?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (file) handleIncomingFile(file);
+});
+attachmentRemoveBtn?.addEventListener("click", clearPendingAttachment);
+
+editorWrapEl?.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  editorWrapEl.classList.add("is-dragover");
+});
+editorWrapEl?.addEventListener("dragleave", () => {
+  editorWrapEl.classList.remove("is-dragover");
+});
+editorWrapEl?.addEventListener("drop", (e) => {
+  e.preventDefault();
+  editorWrapEl.classList.remove("is-dragover");
+  const file = e.dataTransfer?.files?.[0];
+  if (file) handleIncomingFile(file);
+});
+
+contentInput?.addEventListener("paste", (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) {
+        e.preventDefault();
+        handleIncomingFile(file);
+        break;
+      }
+    }
+  }
+});
+
+// === Export Markdown (.md) & Anki (.csv) ===
+function triggerDownload(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function safeSlug(title) {
+  return (title || "hybridnotes-study")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "hybridnotes-study";
+}
+
+function csvEscape(val) {
+  const s = String(val ?? "").replace(/"/g, '""');
+  return `"${s}"`;
+}
+
+document.getElementById("export-md-btn")?.addEventListener("click", () => {
+  const chat = getActiveNote();
+  if (!chat) return;
+  const lines = [`# ${chat.title || "Untitled Study Note"}`, ""];
+  for (const msg of chat.messages || []) {
+    if (msg.role === "user") {
+      lines.push(`## Prompt (${msg.taskLabel || "Note"})`, "", msg.text || "", "");
+    } else if (msg.quizItems?.length) {
+      lines.push(`## Quiz (${msg.badgeText || "AI"})`, "");
+      msg.quizItems.forEach((item, idx) => {
+        lines.push(`${idx + 1}. **${item.q}**`);
+        (item.options || []).forEach((opt, oIdx) => {
+          const mark = oIdx === item.answerIndex ? " *(Answer)*" : "";
+          lines.push(`   - ${String.fromCharCode(65 + oIdx)}. ${opt}${mark}`);
+        });
+        if (item.explanation) lines.push(`   - _Why:_ ${item.explanation}`);
+        lines.push("");
+      });
+    } else if (msg.text) {
+      lines.push(`## Response (${msg.badgeText || "AI"})`, "", msg.text, "");
+    }
+  }
+  triggerDownload(`${safeSlug(chat.title)}.md`, lines.join("\n"), "text/markdown;charset=utf-8");
+});
+
+function exportAnkiFromQuizItems(items, filename) {
+  if (!items.length) {
+    alert("No Quiz Me cards found yet. Generate a Quiz Me set first to export Anki flashcards.");
+    return;
+  }
+  const rows = ["Front,Back,Explanation"];
+  for (const item of items) {
+    const answer = item.options?.[item.answerIndex] || "";
+    rows.push([csvEscape(item.q), csvEscape(answer), csvEscape(item.explanation || "")].join(","));
+  }
+  triggerDownload(filename, rows.join("\n"), "text/csv;charset=utf-8");
+}
+
+document.getElementById("export-anki-btn")?.addEventListener("click", () => {
+  const chat = getActiveNote();
+  const chatCards = [];
+  for (const msg of chat?.messages || []) {
+    if (Array.isArray(msg.quizItems)) chatCards.push(...msg.quizItems);
+  }
+  const items = chatCards.length ? chatCards : getStudyLoopItems(notes).map((x) => x.item);
+  exportAnkiFromQuizItems(items, `${safeSlug(chat?.title)}-anki.csv`);
+});
+
+document.getElementById("study-loop-weak-btn")?.addEventListener("click", () => {
+  openStudyLoop({ weakSpotOnly: true });
+});
+
+document.getElementById("study-loop-export-anki-btn")?.addEventListener("click", () => {
+  const items = getStudyLoopItems(notes).map((x) => x.item);
+  exportAnkiFromQuizItems(items, "hybridnotes-study-loop-anki.csv");
+});
+
+// === Why Hybrid? Live Split View Toggle ===
+const toggleHybridCompareBtn = document.getElementById("toggle-hybrid-compare-btn");
+const hybridCompareView = document.getElementById("hybrid-compare-view");
+toggleHybridCompareBtn?.addEventListener("click", () => {
+  if (!hybridCompareView) return;
+  const nextHidden = !hybridCompareView.hidden;
+  hybridCompareView.hidden = nextHidden;
+  toggleHybridCompareBtn.setAttribute("aria-expanded", String(!nextHidden));
+});

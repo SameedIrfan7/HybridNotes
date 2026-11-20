@@ -77,3 +77,9 @@ export function getDueStudyLoopItems(notes, now = Date.now()) {
     .filter(({ item }) => item.review.dueAt <= now)
     .sort((a, b) => a.item.review.dueAt - b.item.review.dueAt);
 }
+
+export function getWeakSpotItems(notes) {
+  return getStudyLoopItems(notes)
+    .filter(({ item }) => !item.review || item.review.stage === 0 || item.review.reviews === 0)
+    .sort((a, b) => a.item.review.dueAt - b.item.review.dueAt);
+}

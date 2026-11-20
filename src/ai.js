@@ -307,24 +307,48 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, onStream) {
+async function createMultimodalNanoSession() {
+  if (typeof LanguageModel === "undefined" || !LanguageModel.create) {
+    throw new Error("Chrome LanguageModel API is unavailable.");
+  }
+  return LanguageModel.create({
+    expectedInputs: [{ type: "text", languages: ["en"] }, { type: "image" }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }],
+  });
+}
+
+async function runNativeOnDevice(prompt, image, signal, onDownloadProgress, onStatus, onStream) {
   if (typeof LanguageModel === "undefined" || !LanguageModel.create) {
     throw new Error("Chrome LanguageModel API is unavailable.");
   }
   onStatus?.("Loading local Gemini Nano session…");
-  const session = await withTimeout(
-    initOnDeviceModel(onDownloadProgress),
-    45_000,
-    "On-device model timed out while loading."
-  );
+  let tempSession = null;
+  const session = image
+    ? await withTimeout(
+        createMultimodalNanoSession().then((s) => {
+          tempSession = s;
+          return s;
+        }),
+        45_000,
+        "On-device multimodal model timed out while loading."
+      )
+    : await withTimeout(
+        initOnDeviceModel(onDownloadProgress),
+        45_000,
+        "On-device model timed out while loading."
+      );
   if (!session) {
     throw new Error("Chrome LanguageModel session unavailable.");
   }
 
+  const nanoInput = image?.blob
+    ? [{ role: "user", content: [{ type: "text", value: prompt }, { type: "image", value: image.blob }] }]
+    : prompt;
+
   try {
     onStatus?.("Prompt is being processed on-device by Gemini Nano…");
     if (typeof session.promptStreaming === "function") {
-      const stream = session.promptStreaming(prompt, { signal });
+      const stream = session.promptStreaming(nanoInput, { signal });
       let fullText = "";
       let idleTimer = null;
 
@@ -369,13 +393,13 @@ async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, o
     }
 
     const text = await withTimeout(
-      raceWithAbort(session.prompt(prompt, { signal }), signal),
+      raceWithAbort(session.prompt(nanoInput, { signal }), signal),
       90_000,
       "On-device generation timed out."
     );
     return text;
   } catch (err) {
-    if (err?.name !== "AbortError") {
+    if (err?.name !== "AbortError" && !tempSession) {
       try {
         session.destroy?.();
       } catch {
@@ -385,18 +409,28 @@ async function runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, o
       deviceInitPromise = null;
     }
     throw err;
+  } finally {
+    if (tempSession) {
+      try {
+        tempSession.destroy?.();
+      } catch {
+        // Ignore cleanup errors.
+      }
+    }
   }
 }
 
 export async function runAI({
   prompt,
+  image = null,
   mode = "PREFER_ON_DEVICE",
   onDownloadProgress,
   onStatus,
   onStream,
   signal,
 }) {
-  if (!prompt || !prompt.trim()) {
+  const safePrompt = (prompt || "").trim() || (image ? "Summarize this study image and highlight key concepts." : "");
+  if (!safePrompt && !image) {
     throw new Error("Please write or paste some study notes first.");
   }
 
@@ -408,11 +442,14 @@ export async function runAI({
 
     if (nanoStatus === "available") {
       try {
-        const text = await runNativeOnDevice(prompt, signal, onDownloadProgress, onStatus, onStream);
+        const text = await runNativeOnDevice(safePrompt, image, signal, onDownloadProgress, onStatus, onStream);
         return {
           text,
           source: "on-device",
           ms: Math.round(performance.now() - start),
+          privacySummary: "",
+          maskedCount: 0,
+          sanitizedPrompt: "",
         };
       } catch (nativeErr) {
         if (nativeErr?.name === "AbortError") throw nativeErr;
@@ -451,9 +488,12 @@ export async function runAI({
 
   try {
     onStatus?.("Thinking & compiling response on Cloud Flash-Lite…");
-    const clean = sanitizeForCloud(prompt);
+    const clean = sanitizeForCloud(safePrompt);
+    const cloudPayload = image?.base64
+      ? [clean.sanitizedText, { inlineData: { data: image.base64, mimeType: image.mimeType || "image/png" } }]
+      : clean.sanitizedText;
     const result = await withTimeout(
-      raceWithAbort(cloudModel.generateContent(clean.sanitizedText), signal),
+      raceWithAbort(cloudModel.generateContent(cloudPayload), signal),
       30_000,
       "Cloud request timed out. Please check your connection and try again."
     );
@@ -467,6 +507,7 @@ export async function runAI({
       ms,
       privacySummary: source === "cloud" ? clean.summary : "",
       maskedCount: source === "cloud" ? clean.maskedCount : 0,
+      sanitizedPrompt: source === "cloud" ? clean.sanitizedText : "",
     };
   } catch (err) {
     if (err?.name === "AbortError") throw err;

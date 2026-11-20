@@ -637,6 +637,22 @@
 
           <div class="topbar-controls">
             <button
+              id="export-md-btn"
+              type="button"
+              class="topbar-action-btn"
+              title="Export chat as Markdown (.md)"
+            >
+              Export .md
+            </button>
+            <button
+              id="export-anki-btn"
+              type="button"
+              class="topbar-action-btn"
+              title="Export Quiz Me cards as Anki deck (.csv)"
+            >
+              Anki .csv
+            </button>
+            <button
               id="rename-note-btn"
               type="button"
               class="topbar-icon-btn"
@@ -732,7 +748,12 @@
             </div>
           </div>
 
-          <section class="editor-wrap glass-panel">
+          <section id="editor-wrap" class="editor-wrap glass-panel">
+            <div id="attachment-preview" class="attachment-preview" hidden>
+              <img id="attachment-thumb" class="attachment-thumb" alt="Attached study image" hidden />
+              <span id="attachment-name" class="attachment-name mono"></span>
+              <button id="attachment-remove-btn" type="button" class="pill-btn btn-ghost attachment-remove-btn" aria-label="Remove attachment">×</button>
+            </div>
             <label for="note-content" class="sr-only">Study note content</label>
             <textarea
               id="note-content"
@@ -753,6 +774,19 @@
                     <path d="M10 4v12M4 10h12" stroke-linecap="round" />
                   </svg>
                   <span id="selected-task-chip">Auto</span>
+                </button>
+                <input id="attach-file-input" type="file" accept="image/*,.txt,.md,text/plain,text/markdown" hidden />
+                <button
+                  id="attach-file-btn"
+                  type="button"
+                  class="pill-btn btn-ghost attach-file-btn"
+                  title="Attach whiteboard photo or .txt/.md note"
+                  aria-label="Attach image or text file"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M13.5 6.5l-6.2 6.2a2.2 2.2 0 003.1 3.1l6.4-6.4a3.6 3.6 0 00-5.1-5.1L5 11a5 5 0 007.1 7.1l5.4-5.4" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span>Drop / Attach</span>
                 </button>
                 <span id="char-count" class="mono">0 chars</span>
               </div>
@@ -861,6 +895,38 @@
         </div>
       </div>
 
+      <div class="hybrid-compare-bar">
+        <button id="toggle-hybrid-compare-btn" type="button" class="pill-btn btn-ghost" aria-expanded="false">
+          Why Hybrid? Live Comparison
+        </button>
+        <span id="modal-masked-total" class="mono hybrid-masked-stat">0 PII identifiers masked locally</span>
+      </div>
+
+      <div id="hybrid-compare-view" class="hybrid-compare-grid" hidden>
+        <div class="hybrid-compare-card glass-subpanel">
+          <div class="hybrid-compare-head">
+            <span class="badge badge-on-device">On-Device · Gemini Nano</span>
+            <strong class="mono">$0.00 / call</strong>
+          </div>
+          <ul>
+            <li><strong>0 KB uploaded:</strong> Note stays inside Chrome.</li>
+            <li><strong>Works offline:</strong> Zero internet required once downloaded.</li>
+            <li><strong>Your stats:</strong> <span id="compare-ondevice-stats" class="mono">0 runs</span></li>
+          </ul>
+        </div>
+        <div class="hybrid-compare-card glass-subpanel">
+          <div class="hybrid-compare-head">
+            <span class="badge badge-cloud">Cloud · Flash-Lite</span>
+            <strong class="mono">PII Masked</strong>
+          </div>
+          <ul>
+            <li><strong>Redacted locally:</strong> Emails, phones &amp; 6+ digit IDs scrubbed first.</li>
+            <li><strong>Multimodal &amp; universal:</strong> Handles photos &amp; mobile devices.</li>
+            <li><strong>Your stats:</strong> <span id="compare-cloud-stats" class="mono">0 runs</span></li>
+          </ul>
+        </div>
+      </div>
+
       <div class="modal-rules">
         <h3>How HybridNotes Routes Each Request</h3>
         <ul>
@@ -883,6 +949,14 @@
       <p id="study-loop-summary" class="demo-desc" aria-live="polite">
         Miss a quiz question and it returns tomorrow. Get it right and reviews move to 3, 7, then 14 days.
       </p>
+      <div class="study-loop-toolbar">
+        <button id="study-loop-weak-btn" type="button" class="pill-btn btn-primary" hidden>
+          Weak-Spot Drill (Offline)
+        </button>
+        <button id="study-loop-export-anki-btn" type="button" class="pill-btn btn-ghost" hidden>
+          Export Anki (.csv)
+        </button>
+      </div>
       <div id="study-loop-empty" class="study-loop-empty">
         No review cards yet. Make a Quiz Me set, then miss an answer to start your review plan.
       </div>
@@ -1011,12 +1085,11 @@
         <span class="badge badge-on-device">Offline AI Setup</span>
         <button id="nano-dl-close" type="button" class="pill-btn btn-ghost">Close</button>
       </div>
-      <h2 id="nano-dl-title" class="demo-title">Download Gemini Nano for Offline Use?</h2>
+      <h2 id="nano-dl-title" class="demo-title">Enable Offline AI on This Device?</h2>
       <p class="demo-desc">
-        To use HybridNotes offline, Chrome needs to download Gemini Nano once while connected
-        (the download uses network data and requires about 22 GB free disk space). After setup,
-        supported prompts can be processed locally. If you skip, HybridNotes will keep using
-        Cloud Gemini 3.5 Flash-Lite whenever you're online.
+        Chrome downloads the compact Gemini Nano model (<strong>~2–4 GB</strong>) once while
+        connected (Chrome requires ~20 GB free headroom on your drive, though only ~2–4 GB is used).
+        After setup, notes and quizzes run <strong>100% locally</strong> with zero internet.
       </p>
       <div id="nano-dl-progress-wrap" class="nano-dl-progress-wrap" hidden>
         <div class="stat-label">
@@ -1029,7 +1102,7 @@
       </div>
       <div class="demo-footer">
         <button id="nano-dl-skip" type="button" class="pill-btn btn-ghost">Use Cloud Only</button>
-        <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Download Once (~22 GB free)</button>
+        <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Enable Offline AI (~2–4 GB)</button>
       </div>
     </dialog>
 
