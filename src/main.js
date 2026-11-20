@@ -93,6 +93,7 @@ const sidebar = document.getElementById("sidebar");
 
 const offlineBanner = document.getElementById("offline-banner");
 const noteListEl = document.getElementById("note-list");
+const chatSearchInput = document.getElementById("chat-search-input");
 const studyLoopBtn = document.getElementById("study-loop-btn");
 const studyLoopCountEl = document.getElementById("study-loop-count");
 const newNoteBtn = document.getElementById("new-note-btn");
@@ -181,6 +182,8 @@ const profileChatsCount = document.getElementById("profile-chats-count");
 const profileQuotaBar = document.getElementById("profile-quota-bar");
 const profileSavingsLine = document.getElementById("profile-savings-line");
 const profileExportBtn = document.getElementById("profile-export-btn");
+const profileImportBtn = document.getElementById("profile-import-btn");
+const profileImportInput = document.getElementById("profile-import-input");
 const profileTourBtn = document.getElementById("profile-tour-btn");
 const profileStatsBtn = document.getElementById("profile-stats-btn");
 const profileClearBtn = document.getElementById("profile-clear-btn");
@@ -198,6 +201,12 @@ const nanoDlStatusText = document.getElementById("nano-dl-status-text");
 const nanoDlPct = document.getElementById("nano-dl-pct");
 const nanoDlBar = document.getElementById("nano-dl-bar");
 
+const nanoHelpModal = document.getElementById("nano-help-modal");
+const nanoHelpClose = document.getElementById("nano-help-close");
+const nanoHelpOk = document.getElementById("nano-help-ok");
+const nanoHelpAutoBtn = document.getElementById("nano-help-auto-btn");
+const nanoHelpSub = document.getElementById("nano-help-sub");
+
 let notes = loadNotes();
 let activeId = notes[0]?.id || null;
 let stats = loadStats();
@@ -210,6 +219,7 @@ let slideIndex = 0;
 let carouselPaused = false;
 let studyReviewQueue = [];
 let studyReviewIndex = 0;
+let chatSearchQuery = "";
 
 function makeId() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -551,14 +561,34 @@ async function refreshNanoStatus() {
       pill.classList.add("nano-warn", "nano-clickable");
       pill.title = "Click to download Gemini Nano once (about 22 GB free space needed)";
     } else {
-      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>On-device AI unavailable on this device. Using cloud with identifiers masked.</span>`;
-      pill.classList.add("nano-warn");
+      pill.innerHTML = `${GEMINI_SPARKLE_SVG}<span>Cloud AI ready (PII masked) · On-device unavailable</span>`;
+      pill.classList.add("nano-warn", "nano-clickable");
+      pill.title = "Click to see why on-device AI is unavailable here";
     }
+  }
+
+  const nanoOpt = document.querySelector('.model-opt[data-model="nano"] span');
+  if (nanoOpt) {
+    nanoOpt.textContent =
+      status === "available" || status === "downloadable" || status === "downloading"
+        ? "Gemini Nano (On-device)"
+        : "Gemini Nano (Unavailable here)";
   }
 }
 
 function openNanoDownloadModal() {
-  if (!nanoDownloadModal || isMobileDevice()) return;
+  if (!nanoDownloadModal) return;
+  if (lastNanoStatus === "unavailable") {
+    setDrawerOpen(false);
+    if (nanoHelpSub) {
+      nanoHelpSub.textContent = isMobileDevice()
+        ? "Chrome's built-in Gemini Nano currently runs only on Desktop Chrome, not on mobile browsers. Switch to Auto mode below to study right now using Cloud Flash-Lite (with identifiers masked)."
+        : "Chrome's built-in Gemini Nano isn't active on this profile yet. Follow these steps to enable it, or switch to Auto mode to use Cloud Flash-Lite right away.";
+    }
+    nanoHelpModal?.showModal();
+    return;
+  }
+  if (isMobileDevice()) return;
   if (lastNanoStatus !== "downloadable" && lastNanoStatus !== "downloading") return;
   setDrawerOpen(false);
   nanoDlConfirm.disabled = false;
@@ -570,6 +600,28 @@ function openNanoDownloadModal() {
 nanoStatusPill?.addEventListener("click", openNanoDownloadModal);
 mobileNanoStatusPill?.addEventListener("click", openNanoDownloadModal);
 nanoDlClose?.addEventListener("click", () => nanoDownloadModal?.close());
+nanoHelpClose?.addEventListener("click", () => nanoHelpModal?.close());
+document.querySelectorAll(".copy-flag-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(btn.dataset.copy || "");
+      btn.textContent = "Copied!";
+      setTimeout(() => {
+        btn.textContent = "Copy";
+      }, 1400);
+    } catch {
+      // Clipboard unavailable.
+    }
+  });
+});
+nanoHelpOk?.addEventListener("click", () => nanoHelpModal?.close());
+nanoHelpAutoBtn?.addEventListener("click", () => {
+  selectModel("auto");
+  nanoHelpModal?.close();
+});
+nanoHelpModal?.addEventListener("click", (e) => {
+  if (e.target === nanoHelpModal) nanoHelpModal.close();
+});
 nanoDlSkip?.addEventListener("click", () => nanoDownloadModal?.close());
 nanoDownloadModal?.addEventListener("click", (e) => {
   if (e.target === nanoDownloadModal) nanoDownloadModal.close();
@@ -625,7 +677,24 @@ function deleteNoteById(id) {
 
 function renderSidebar() {
   noteListEl.innerHTML = "";
-  for (const note of notes) {
+  const q = chatSearchQuery.trim().toLowerCase();
+  const visibleNotes = q
+    ? notes.filter((n) => {
+        const inTitle = (n.title || "").toLowerCase().includes(q);
+        const inMsgs = (n.messages || []).some((m) => (m.text || "").toLowerCase().includes(q));
+        return inTitle || inMsgs;
+      })
+    : notes;
+
+  if (visibleNotes.length === 0) {
+    const emptyLi = document.createElement("li");
+    emptyLi.className = "note-empty-search";
+    emptyLi.textContent = "No matching chats found.";
+    noteListEl.appendChild(emptyLi);
+    return;
+  }
+
+  for (const note of visibleNotes) {
     const li = document.createElement("li");
     li.className = `note-row${note.id === activeId ? " active" : ""}`;
 
@@ -922,6 +991,29 @@ function renderThread() {
           body.innerHTML = renderMarkdownSafe(msg.text || "");
         }
         card.append(header, reason, body);
+
+        if (msg.badgeText === "Error" && /gemini nano|on-device/i.test(msg.text || "")) {
+          const errActions = document.createElement("div");
+          errActions.className = "error-action-row";
+
+          const guideBtn = document.createElement("button");
+          guideBtn.type = "button";
+          guideBtn.className = "pill-btn btn-ghost";
+          guideBtn.textContent = "How to Enable";
+          guideBtn.addEventListener("click", () => openNanoDownloadModal());
+
+          const autoSwitchBtn = document.createElement("button");
+          autoSwitchBtn.type = "button";
+          autoSwitchBtn.className = "pill-btn btn-primary";
+          autoSwitchBtn.textContent = "Switch to Auto (Cloud) →";
+          autoSwitchBtn.addEventListener("click", () => {
+            selectModel("auto");
+            contentInput.focus();
+          });
+
+          errActions.append(guideBtn, autoSwitchBtn);
+          card.appendChild(errActions);
+        }
       }
       if (msg.badgeText !== "Running..." && msg.text) {
         const aiActions = document.createElement("div");
@@ -1996,6 +2088,11 @@ profileDefaultPrivate?.addEventListener("change", () => {
   saveProfile();
 });
 
+chatSearchInput?.addEventListener("input", () => {
+  chatSearchQuery = chatSearchInput.value || "";
+  renderSidebar();
+});
+
 profileExportBtn?.addEventListener("click", () => {
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -2007,9 +2104,46 @@ profileExportBtn?.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `hybridnotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `hybridnotes-notes-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+});
+
+profileImportBtn?.addEventListener("click", () => {
+  profileImportInput?.click();
+});
+
+profileImportInput?.addEventListener("change", async () => {
+  const file = profileImportInput.files?.[0];
+  profileImportInput.value = "";
+  if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    const incoming = Array.isArray(parsed?.chats) ? parsed.chats.map(migrateNote) : [];
+    if (incoming.length === 0) {
+      window.alert("No saved notes were found in that file.");
+      return;
+    }
+    const existingIds = new Set(notes.map((n) => n.id));
+    let added = 0;
+    for (const chat of incoming) {
+      if (!existingIds.has(chat.id)) {
+        notes.push(chat);
+        existingIds.add(chat.id);
+        added += 1;
+      }
+    }
+    if (added > 0) {
+      notes.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      activeId = notes[0]?.id || activeId;
+      saveNotes();
+      renderAll();
+      renderProfile();
+    }
+    window.alert(added > 0 ? `Loaded ${added} saved ${added === 1 ? "chat" : "chats"}!` : "All notes from that file are already here.");
+  } catch {
+    window.alert("Could not open that file. Please choose a file saved from HybridNotes.");
+  }
 });
 
 profileTourBtn?.addEventListener("click", () => {

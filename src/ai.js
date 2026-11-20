@@ -111,6 +111,10 @@ export function isMobileDevice() {
   }
 }
 
+const NANO_MODEL_OPTS = {
+  expectedOutputs: [{ type: "text", languages: ["en"] }],
+};
+
 export async function getOnDeviceStatus() {
   try {
     if (isMobileDevice()) {
@@ -119,9 +123,15 @@ export async function getOnDeviceStatus() {
     if (typeof LanguageModel === "undefined" || !LanguageModel.availability) {
       return "unavailable";
     }
+    const status = await LanguageModel.availability(NANO_MODEL_OPTS);
+    if (status && status !== "unavailable") return status;
     return await LanguageModel.availability();
   } catch {
-    return "unavailable";
+    try {
+      return await LanguageModel.availability();
+    } catch {
+      return "unavailable";
+    }
   }
 }
 
@@ -179,6 +189,7 @@ async function getBaseNanoSession(onProgress, allowDownload = false) {
       (allowDownload && (status === "downloading" || status === "downloadable") && navigator.onLine);
     if (canStart) {
       cachedNanoSession = await LanguageModel.create({
+        ...NANO_MODEL_OPTS,
         monitor(m) {
           if (typeof onProgress === "function" && status !== "available") {
             m.addEventListener("downloadprogress", (e) => {
@@ -411,12 +422,19 @@ export async function runAI({
         onStatus?.("Local Nano unavailable — switching to Cloud Flash-Lite…");
       }
     } else if (mode === "ONLY_ON_DEVICE") {
-      if (!isMobileDevice() && (nanoStatus === "downloadable" || nanoStatus === "downloading")) {
+      if (isMobileDevice()) {
+        throw new Error(
+          "On-device Gemini Nano isn't supported on mobile browsers yet. Switch the model selector to Auto or Flash-Lite to run in the cloud with identifiers masked."
+        );
+      }
+      if (nanoStatus === "downloadable" || nanoStatus === "downloading") {
         throw new Error(
           "Gemini Nano isn't downloaded yet. Click 'Enable Offline AI' in the top bar to download it once (about 22 GB free disk space required)."
         );
       }
-      throw new Error("Private mode needs desktop Chrome with Gemini Nano.");
+      throw new Error(
+        "Gemini Nano isn't enabled on this Chrome profile (requires Chrome Desktop 139+, Prompt API flags or ~22 GB free disk & >4 GB VRAM). Switch to Auto or Flash-Lite to use cloud AI."
+      );
     } else {
       onStatus?.(
         nanoStatus === "downloadable"

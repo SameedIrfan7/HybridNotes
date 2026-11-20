@@ -1,71 +1,88 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  getDueStudyLoopItems,
-  getStudyLoopSummary,
-  recordReviewOutcome,
   scheduleMissedQuizItem,
+  recordReviewOutcome,
+  getStudyLoopSummary,
+  getDueStudyLoopItems,
 } from "../src/study-loop.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-test("schedules a missed quiz answer for tomorrow", () => {
-  const item = {};
-  const now = 1_800_000_000_000;
+test("schedules missed quiz item for review tomorrow (stage 0)", () => {
+  const now = 1_700_000_000_000;
+  const item = { q: "What is ATP?", options: ["Energy", "Lipid"], answerIndex: 0 };
+  const review = scheduleMissedQuizItem(item, now);
 
-  scheduleMissedQuizItem(item, now);
-
-  assert.equal(item.review.stage, 0);
-  assert.equal(item.review.dueAt, now + DAY_MS);
-  assert.equal(item.review.reviews, 0);
+  assert.equal(review.stage, 0);
+  assert.equal(review.reviews, 0);
+  assert.equal(review.dueAt, now + DAY_MS);
 });
 
-test("spaces remembered answers and resets missed reviews to tomorrow", () => {
-  const item = { review: { stage: 0, reviews: 0 } };
-  const now = 1_800_000_000_000;
+test("spaces intervals across 3, 7, and 14 days when remembered", () => {
+  const t0 = 1_700_000_000_000;
+  const item = { q: "Q1", options: ["A", "B"], answerIndex: 0 };
+  scheduleMissedQuizItem(item, t0);
 
-  recordReviewOutcome(item, true, now);
-  assert.equal(item.review.stage, 1);
-  assert.equal(item.review.dueAt, now + 3 * DAY_MS);
+  const r1 = recordReviewOutcome(item, true, t0 + DAY_MS);
+  assert.equal(r1.stage, 1);
+  assert.equal(r1.dueAt, t0 + DAY_MS + 3 * DAY_MS);
+  assert.equal(r1.reviews, 1);
 
-  recordReviewOutcome(item, false, now);
-  assert.equal(item.review.stage, 0);
-  assert.equal(item.review.dueAt, now + DAY_MS);
-  assert.equal(item.review.reviews, 2);
+  const r2 = recordReviewOutcome(item, true, r1.dueAt);
+  assert.equal(r2.stage, 2);
+  assert.equal(r2.dueAt, r1.dueAt + 7 * DAY_MS);
+
+  const r3 = recordReviewOutcome(item, true, r2.dueAt);
+  assert.equal(r3.stage, 3);
+  assert.equal(r3.dueAt, r2.dueAt + 14 * DAY_MS);
+
+  // Caps at stage 3 (14 days)
+  const r4 = recordReviewOutcome(item, true, r3.dueAt);
+  assert.equal(r4.stage, 3);
+  assert.equal(r4.dueAt, r3.dueAt + 14 * DAY_MS);
 });
 
-test("caps successful review spacing at fourteen days", () => {
-  const item = { review: { stage: 3, reviews: 4 } };
-  const now = 1_800_000_000_000;
+test("resets stage to 0 (1 day) when forgotten during review", () => {
+  const t0 = 1_700_000_000_000;
+  const item = {
+    q: "Q2",
+    options: ["A", "B"],
+    answerIndex: 1,
+    review: { stage: 2, dueAt: t0, reviews: 2, lastReviewedAt: t0 - 7 * DAY_MS },
+  };
 
-  recordReviewOutcome(item, true, now);
-
-  assert.equal(item.review.stage, 3);
-  assert.equal(item.review.dueAt, now + 14 * DAY_MS);
+  const res = recordReviewOutcome(item, false, t0);
+  assert.equal(res.stage, 0);
+  assert.equal(res.dueAt, t0 + DAY_MS);
+  assert.equal(res.reviews, 3);
 });
 
-test("collects due and upcoming quiz cards across saved notes", () => {
-  const now = 1_800_000_000_000;
+test("summarizes due vs upcoming items and sorts due queue oldest-first", () => {
+  const now = 1_700_000_000_000;
   const notes = [
     {
       title: "Biology",
       messages: [
         {
           quizItems: [
-            { q: "Due", options: ["a", "b"], answerIndex: 0, review: { dueAt: now - 1, reviews: 0 } },
-            { q: "Later", options: ["a", "b"], answerIndex: 1, review: { dueAt: now + 1, reviews: 1 } },
-            { q: "No review", options: ["a", "b"], answerIndex: 1 },
+            { q: "Due older", options: ["A", "B"], answerIndex: 0, review: { stage: 0, dueAt: now - 5000, reviews: 1 } },
+            { q: "Due newer", options: ["A", "B"], answerIndex: 0, review: { stage: 0, dueAt: now - 1000, reviews: 0 } },
+            { q: "Future", options: ["A", "B"], answerIndex: 0, review: { stage: 1, dueAt: now + DAY_MS, reviews: 2 } },
           ],
         },
       ],
     },
   ];
 
-  assert.equal(getDueStudyLoopItems(notes, now).length, 1);
-  assert.deepEqual(getStudyLoopSummary(notes, now), {
-    due: 1,
-    upcoming: 1,
-    completedReviews: 1,
-    nextDueAt: now + 1,
-  });
+  const summary = getStudyLoopSummary(notes, now);
+  assert.equal(summary.due, 2);
+  assert.equal(summary.upcoming, 1);
+  assert.equal(summary.completedReviews, 3);
+  assert.equal(summary.nextDueAt, now + DAY_MS);
+
+  const queue = getDueStudyLoopItems(notes, now);
+  assert.equal(queue.length, 2);
+  assert.equal(queue[0].item.q, "Due older");
+  assert.equal(queue[1].item.q, "Due newer");
 });

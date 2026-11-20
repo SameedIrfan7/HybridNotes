@@ -3386,3 +3386,104 @@ html[data-theme="light"] .cream-card p {
     font-size: clamp(2.15rem, 7.2vw, 3rem);
   }
 }
+
+.chat-search-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  background: var(--glass-sub);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0.42rem 0.65rem;
+  font-size: 0.82rem;
+  color: var(--cream);
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.chat-search-input::placeholder {
+  color: var(--muted);
+}
+
+.chat-search-input:focus {
+  border-color: var(--red-border);
+  background: var(--glass-hover);
+}
+
+.note-empty-search {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.profile-clear-wide {
+  grid-column: 1 / -1;
+}
+
+/* --- Cute Pill Search Box & Nano Setup Guide --- */
+.chat-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-search-icon {
+  position: absolute;
+  left: 0.7rem;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.chat-search-wrap .chat-search-input {
+  padding: 0.42rem 0.75rem 0.42rem 2rem;
+  border-radius: 999px;
+  background: var(--glass-sub);
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+}
+
+.chat-search-wrap .chat-search-input:focus {
+  outline: none;
+  border-color: var(--red-border);
+  background: var(--glass-hover);
+  box-shadow: 0 0 0 3px rgba(225, 29, 42, 0.14);
+}
+
+.nano-help-steps {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.nano-help-steps strong {
+  color: var(--cream);
+}
+
+.copy-flag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.copy-flag-row code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}

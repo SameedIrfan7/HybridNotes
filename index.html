@@ -552,6 +552,20 @@
 
         <div class="sidebar-chats-group">
           <div class="sidebar-section-label">Chats</div>
+          <div class="chat-search-wrap">
+            <svg class="chat-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <circle cx="9" cy="9" r="5.5" />
+              <path d="M13.5 13.5L17 17" stroke-linecap="round" />
+            </svg>
+            <label for="chat-search-input" class="sr-only">Search chats</label>
+            <input
+              id="chat-search-input"
+              type="search"
+              class="chat-search-input"
+              placeholder="Search chats…"
+              autocomplete="off"
+            />
+          </div>
           <ul id="note-list" class="note-list" role="listbox" aria-label="Saved chats"></ul>
         </div>
 
@@ -983,10 +997,12 @@
       </div>
 
       <div class="profile-actions-grid">
-        <button id="profile-export-btn" type="button" class="pill-btn">Export Backup (.json)</button>
+        <button id="profile-export-btn" type="button" class="pill-btn">Save My Notes</button>
+        <button id="profile-import-btn" type="button" class="pill-btn">Open Saved Notes</button>
+        <input id="profile-import-input" type="file" accept=".json,application/json" hidden />
         <button id="profile-tour-btn" type="button" class="pill-btn">Replay Quick Demo</button>
         <button id="profile-stats-btn" type="button" class="pill-btn">Routing &amp; Telemetry</button>
-        <button id="profile-clear-btn" type="button" class="pill-btn btn-danger">Clear Local Data</button>
+        <button id="profile-clear-btn" type="button" class="pill-btn btn-danger profile-clear-wide">Clear Local Data</button>
       </div>
     </dialog>
 
@@ -1014,6 +1030,39 @@
       <div class="demo-footer">
         <button id="nano-dl-skip" type="button" class="pill-btn btn-ghost">Use Cloud Only</button>
         <button id="nano-dl-confirm" type="button" class="btn-primary pill-btn">Download Once (~22 GB free)</button>
+      </div>
+    </dialog>
+
+    <dialog id="nano-help-modal" class="demo-modal glass-panel" aria-labelledby="nano-help-title">
+      <div class="demo-header">
+        <span class="badge badge-blocked">On-Device Setup Guide</span>
+        <button id="nano-help-close" type="button" class="pill-btn btn-ghost">Close</button>
+      </div>
+      <h2 id="nano-help-title" class="demo-title">How to Enable Gemini Nano (Optional)</h2>
+      <p id="nano-help-sub" class="demo-desc">
+        You don't need Gemini Nano to use HybridNotes — <strong>Auto</strong> mode already runs on Cloud Flash-Lite
+        with personal identifiers masked locally. Want offline on-device AI too?
+      </p>
+      <ol class="nano-help-steps">
+        <li>Use <strong>Desktop Chrome 139+</strong> with <strong>≥20 GB free disk space</strong> on your main drive &amp; &gt;3 GB GPU VRAM.</li>
+        <li>
+          <strong>Chrome 154+:</strong> Paste in Chrome's address bar, set to <strong>Enabled</strong>, then click <strong>Relaunch</strong> (on Chrome 139–153, use <code>#prompt-api-for-gemini-nano</code>):
+          <div class="copy-flag-row">
+            <code class="md-inline-code">chrome://flags/#prompt-api</code>
+            <button type="button" class="pill-btn btn-ghost copy-flag-btn" data-copy="chrome://flags/#prompt-api">Copy</button>
+          </div>
+        </li>
+        <li>
+          Still unavailable? Check <strong>Broker State</strong> (disk/VRAM eligibility) or update <em>Optimization Guide On Device Model</em> in <code>chrome://components</code>:
+          <div class="copy-flag-row">
+            <code class="md-inline-code">chrome://on-device-internals</code>
+            <button type="button" class="pill-btn btn-ghost copy-flag-btn" data-copy="chrome://on-device-internals">Copy</button>
+          </div>
+        </li>
+      </ol>
+      <div class="demo-footer">
+        <button id="nano-help-ok" type="button" class="pill-btn btn-ghost">Got it</button>
+        <button id="nano-help-auto-btn" type="button" class="btn-primary pill-btn">Switch to Auto (Cloud) →</button>
       </div>
     </dialog>
 
