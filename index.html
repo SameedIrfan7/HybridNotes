@@ -628,7 +628,7 @@
             <button id="sidebar-stats-btn" type="button" class="stats-hint">Details ↗</button>
           </div>
           <p id="stats-summary" class="stats-summary sr-only">
-            0% on-device · 0 cloud calls avoided · ~0.0 KB text
+            0% on-device · an estimated 0 cloud calls avoided · ~0.0 KB text
           </p>
           <div class="sidebar-stats-highlight">
             <strong id="sidebar-ondevice-pct">0%</strong>
@@ -644,10 +644,7 @@
           </div>
         </section>
 
-        <section class="sidebar-section sidebar-device-section" aria-label="Device and network status">
-          <button id="mobile-nano-status-pill" type="button" class="nano-status glass-pill mobile-only-block" aria-live="polite">
-            Checking Nano…
-          </button>
+        <section class="sidebar-section sidebar-device-section" aria-label="Offline routing settings">
           <label class="sidebar-switch-row" for="mobile-sim-offline-toggle">
             <span><i class="sidebar-offline-indicator" aria-hidden="true"></i>Offline mode</span>
             <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" aria-label="Simulate offline mode for routing" />
@@ -943,7 +940,7 @@
               <span>Workspace</span>
             </button>
             <div class="profile-avatar-lg" id="settings-avatar-initials">S</div>
-            <div>
+            <div class="settings-title-copy">
               <p class="settings-eyebrow">Workspace preferences</p>
               <h1 id="settings-title">Settings</h1>
               <p class="settings-page-subtitle">Your profile and study data stay on this device.</p>
@@ -985,6 +982,15 @@
                   <input id="profile-default-private" class="switch-input" type="checkbox" />
                 </label>
               </div>
+              <div class="profile-section profile-ai-status glass-subpanel">
+                <div>
+                  <p class="profile-section-title">Device AI availability</p>
+                  <p class="profile-data-note">Availability depends on this browser and device. Cloud study tasks remain available with identifier masking.</p>
+                </div>
+                <button id="profile-nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
+                  Checking Nano…
+                </button>
+              </div>
             </section>
 
             <section id="settings-panel-usage" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-usage" tabindex="0" hidden>
@@ -997,14 +1003,14 @@
                   <h3>Routing &amp; telemetry</h3>
                   <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset stats</button>
                 </div>
-                <p class="usage-details-subtitle">Live inference metrics and smart router policy.</p>
+                <p class="usage-details-subtitle">Live inference metrics and smart router policy. Cloud calls avoided is estimated from on-device runs.</p>
                 <div class="modal-kpi-grid">
                   <div class="modal-kpi glass-subpanel">
                     <span class="kpi-label">On-device share</span>
                     <strong id="modal-ondevice-pct" class="kpi-value mono">0%</strong>
                   </div>
                   <div class="modal-kpi glass-subpanel">
-                    <span class="kpi-label">Cloud calls avoided</span>
+                    <span class="kpi-label">Estimated cloud calls avoided</span>
                     <strong id="modal-avoided" class="kpi-value mono">0</strong>
                   </div>
                   <div class="modal-kpi glass-subpanel">
@@ -1083,14 +1089,14 @@
               <div class="profile-section glass-subpanel">
                 <h3 class="settings-card-title">This device</h3>
                 <div class="profile-quota-row">
-                  <span id="profile-quota-summary" class="mono">0.0 KB / 5,120 KB localStorage</span>
+                  <span id="profile-quota-summary" class="mono">0.0 KB / ~5,120 KB estimated browser storage</span>
                   <span id="profile-chats-count" class="mono">0 chats · 0 messages</span>
                 </div>
                 <div class="stat-track">
                   <div id="profile-quota-bar" class="stat-fill stat-fill-green" style="width: 1%"></div>
                 </div>
                 <p class="profile-data-note">
-                  Your notes and profile are stored in this browser's localStorage. They are not encrypted; clearing browser data removes local backups.
+                  Notes and profile values are stored unencrypted in this browser's localStorage. The 5 MB figure is an estimate; actual browser limits vary by device and browser.
                 </p>
               </div>
             </section>

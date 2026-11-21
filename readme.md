@@ -95,26 +95,30 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
    ```bash
    npm install
    ```
-2. Copy `.env.example` to `.env` and provide your Firebase values:
+2. Install the Playwright browser used by UI tests:
+   ```bash
+   npx playwright install chromium
+   ```
+3. Copy `.env.example` to `.env` and provide your Firebase values:
    ```env
    VITE_FIREBASE_API_KEY=your_firebase_api_key_here
    VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key_here
    ```
-3. Start the development server:
+4. Start the development server:
    ```bash
    npm run dev
    ```
-4. Run the automated tests:
+5. Run the automated tests:
    ```bash
    npm test
    ```
-   The current Node test suite covers routing guardrails, privacy/offline behavior, identifier masking, friendly error formatting, and Study Loop scheduling.
-5. Build the production bundle:
+   The test command runs the Node suite for routing and Study Loop behavior, plus Playwright UI checks for settings navigation, telemetry, and the mobile drawer.
+6. Build the production bundle:
    ```bash
    npm run build
    npm run preview
    ```
-6. Deploy:
+7. Deploy:
    ```bash
    firebase deploy --only hosting
    ```

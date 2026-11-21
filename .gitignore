@@ -27,6 +27,8 @@ VITE_FIREBASE_API_KEY=your_firebase_web_api_key_here
 .firebase/
 node_modules/
 dist/
+playwright-report/
+test-results/
 
 .env
 .firebase/

@@ -94,7 +94,7 @@ const settingsPanels = document.querySelectorAll(".settings-panel");
 const simOfflineToggle = document.getElementById("sim-offline-toggle");
 const mobileSimOfflineToggle = document.getElementById("mobile-sim-offline-toggle");
 const nanoStatusPill = document.getElementById("nano-status-pill");
-const mobileNanoStatusPill = document.getElementById("mobile-nano-status-pill");
+const profileNanoStatusPill = document.getElementById("profile-nano-status-pill");
 
 const carouselTrack = document.getElementById("carousel-track");
 const carouselPrev = document.getElementById("carousel-prev");
@@ -577,7 +577,7 @@ function renderStats() {
     : null;
   const estimatedKb = (stats.estimatedTextBytes / 1024).toFixed(1);
 
-  statsSummaryEl.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB text`;
+  statsSummaryEl.textContent = `${onPct}% on-device · an estimated ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB text`;
   statsSummaryEl.title =
     "Estimated UTF-8 size of note and response text for on-device runs; not total network usage.";
   if (sidebarOnDevicePct) sidebarOnDevicePct.textContent = `${onPct}%`;
@@ -631,7 +631,7 @@ async function refreshNanoStatus() {
   const mobile = isMobileDevice();
   const status = await getOnDeviceStatus();
   lastNanoStatus = status;
-  const pills = [nanoStatusPill, mobileNanoStatusPill].filter(Boolean);
+  const pills = [nanoStatusPill, profileNanoStatusPill].filter(Boolean);
   for (const pill of pills) {
     pill.classList.remove("nano-ready", "nano-warn", "nano-clickable");
     if (status === "available") {
@@ -645,7 +645,10 @@ async function refreshNanoStatus() {
       pill.classList.add("nano-warn", "nano-clickable");
       pill.title = "Click to download the ~2–4 GB offline model once";
     } else {
-      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>Cloud AI ready (PII masked) · On-device unavailable</span>`;
+      const statusText = mobile
+        ? "Cloud ready · on-device AI unavailable"
+        : "Cloud AI ready (PII masked) · On-device unavailable";
+      pill.innerHTML = `${DEVICE_CHIP_SVG}<span>${statusText}</span>`;
       pill.classList.add("nano-warn", "nano-clickable");
       pill.title = "Click to see why on-device AI is unavailable here";
     }
@@ -682,7 +685,7 @@ function openNanoDownloadModal() {
 }
 
 nanoStatusPill?.addEventListener("click", openNanoDownloadModal);
-mobileNanoStatusPill?.addEventListener("click", openNanoDownloadModal);
+profileNanoStatusPill?.addEventListener("click", openNanoDownloadModal);
 nanoDlClose?.addEventListener("click", () => nanoDownloadModal?.close());
 nanoHelpClose?.addEventListener("click", () => nanoHelpModal?.close());
 document.querySelectorAll(".copy-flag-btn").forEach((btn) => {
@@ -2285,7 +2288,7 @@ function renderProfile() {
   const msgCount = notes.reduce((acc, n) => acc + (n.messages?.length || 0), 0);
 
   if (profileQuotaSummary) {
-    profileQuotaSummary.textContent = `${usedKb} KB / 5,120 KB localStorage`;
+    profileQuotaSummary.textContent = `${usedKb} KB / ~${quotaKb.toLocaleString()} KB estimated storage`;
   }
   if (profileChatsCount) {
     profileChatsCount.textContent = `${notes.length} chats · ${msgCount} messages`;
