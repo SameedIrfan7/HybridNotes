@@ -5,6 +5,7 @@ import {
   isMobileDevice,
   getMaxOnDeviceChars,
   runChunkedOnDevice,
+  sanitizeForCloud,
 } from "./ai.js";
 import { decideRoute } from "./router.js";
 import {
@@ -73,11 +74,23 @@ const TASK_LABELS = {
 };
 
 const navHomeBtn = document.getElementById("nav-home-btn");
+const brandHomeBtn = document.getElementById("brand-home-btn");
+const navFeaturesBtn = document.getElementById("nav-features-btn");
+const navPrivacyBtn = document.getElementById("nav-privacy-btn");
+const navOssBtn = document.getElementById("nav-oss-btn");
 const navWorkspaceBtn = document.getElementById("nav-workspace-btn");
 const launchWorkspaceBtn = document.getElementById("launch-workspace-btn");
 const footerLaunchBtn = document.getElementById("footer-launch-btn");
+const footerPrivacyBtn = document.getElementById("footer-privacy-btn");
 const homeView = document.getElementById("home-view");
+const privacyView = document.getElementById("privacy-view");
 const workspaceView = document.getElementById("workspace-view");
+const workspaceMain = workspaceView.querySelector(".workspace");
+const settingsView = document.getElementById("settings-view");
+const settingsMenuBtn = document.getElementById("settings-menu-btn");
+const settingsBackBtn = document.getElementById("settings-back-btn");
+const settingsTabs = document.querySelectorAll(".settings-tab");
+const settingsPanels = document.querySelectorAll(".settings-panel");
 const simOfflineToggle = document.getElementById("sim-offline-toggle");
 const mobileSimOfflineToggle = document.getElementById("mobile-sim-offline-toggle");
 const nanoStatusPill = document.getElementById("nano-status-pill");
@@ -93,6 +106,7 @@ const mobileMenuBtn = document.getElementById("mobile-menu-btn");
 const closeDrawerBtn = document.getElementById("close-drawer-btn");
 const drawerBackdrop = document.getElementById("drawer-backdrop");
 const sidebar = document.getElementById("sidebar");
+const sidebarHomeBtn = document.getElementById("sidebar-home-btn");
 
 const offlineBanner = document.getElementById("offline-banner");
 const noteListEl = document.getElementById("note-list");
@@ -122,16 +136,14 @@ const runTimerEl = document.getElementById("run-timer");
 const resultsFeed = document.getElementById("results-feed");
 const chatThreadEl = document.getElementById("chat-thread");
 
-const statsCard = document.getElementById("stats-card");
 const resetStatsBtn = document.getElementById("reset-stats-btn");
 const statsSummaryEl = document.getElementById("stats-summary");
+const sidebarOnDevicePct = document.getElementById("sidebar-ondevice-pct");
 const statOnDeviceMeta = document.getElementById("stat-ondevice-meta");
 const statCloudMeta = document.getElementById("stat-cloud-meta");
 const statOnDeviceBar = document.getElementById("stat-ondevice-bar");
 const statCloudBar = document.getElementById("stat-cloud-bar");
 
-const statsModal = document.getElementById("stats-modal");
-const closeStatsModal = document.getElementById("close-stats-modal");
 const modalOnDevicePct = document.getElementById("modal-ondevice-pct");
 const modalAvoided = document.getElementById("modal-avoided");
 const modalKbSaved = document.getElementById("modal-kb-saved");
@@ -174,21 +186,17 @@ const studyLoopDemoStartBtn = document.getElementById("study-loop-demo-start-btn
 
 const profileBtn = document.getElementById("profile-btn");
 const profileAvatarInitials = document.getElementById("profile-avatar-initials");
-const profileModal = document.getElementById("profile-modal");
-const closeProfileModal = document.getElementById("close-profile-modal");
-const profileModalInitials = document.getElementById("profile-modal-initials");
+const settingsAvatarInitials = document.getElementById("settings-avatar-initials");
 const profileNameInput = document.getElementById("profile-name-input");
 const profileFocusInput = document.getElementById("profile-focus-input");
 const profileDefaultPrivate = document.getElementById("profile-default-private");
 const profileQuotaSummary = document.getElementById("profile-quota-summary");
 const profileChatsCount = document.getElementById("profile-chats-count");
 const profileQuotaBar = document.getElementById("profile-quota-bar");
-const profileSavingsLine = document.getElementById("profile-savings-line");
 const profileExportBtn = document.getElementById("profile-export-btn");
 const profileImportBtn = document.getElementById("profile-import-btn");
 const profileImportInput = document.getElementById("profile-import-input");
 const profileTourBtn = document.getElementById("profile-tour-btn");
-const profileStatsBtn = document.getElementById("profile-stats-btn");
 const profileClearBtn = document.getElementById("profile-clear-btn");
 const sidebarStatsBtn = document.getElementById("sidebar-stats-btn");
 const sidebarProfileBtn = document.getElementById("sidebar-profile-btn");
@@ -218,6 +226,7 @@ let maxOnDeviceChars = 1500;
 let selectedTask = "auto";
 let selectedModel = "auto";
 let activeAbortController = null;
+let pendingAttachment = null;
 let slideIndex = 0;
 let carouselPaused = false;
 let studyReviewQueue = [];
@@ -230,7 +239,7 @@ function makeId() {
 
 function initCarousel() {
   const slides = carouselTrack?.children?.length || 0;
-  if (!slides) return;
+  if (!slides || !carouselDots) return;
 
   carouselDots.innerHTML = "";
   for (let i = 0; i < slides; i += 1) {
@@ -242,9 +251,9 @@ function initCarousel() {
     carouselDots.appendChild(dot);
   }
 
-  carouselPrev.addEventListener("click", () => goToSlide(slideIndex - 1));
-  carouselNext.addEventListener("click", () => goToSlide(slideIndex + 1));
-  carouselToggle.addEventListener("click", () => {
+  carouselPrev?.addEventListener("click", () => goToSlide(slideIndex - 1));
+  carouselNext?.addEventListener("click", () => goToSlide(slideIndex + 1));
+  carouselToggle?.addEventListener("click", () => {
     carouselPaused = !carouselPaused;
     carouselToggle.textContent = carouselPaused ? "Play" : "Pause";
   });
@@ -256,7 +265,7 @@ function initCarousel() {
 
 function goToSlide(idx) {
   const slides = carouselTrack?.children?.length || 0;
-  if (!slides) return;
+  if (!slides || !carouselDots) return;
   slideIndex = (idx + slides) % slides;
   carouselTrack.style.transform = `translateX(-${slideIndex * 100}%)`;
   Array.from(carouselDots.children).forEach((dot, i) => {
@@ -268,6 +277,11 @@ function setDrawerOpen(open) {
   sidebar.classList.toggle("drawer-open", open);
   drawerBackdrop.hidden = !open;
   mobileMenuBtn.setAttribute("aria-expanded", String(open));
+  settingsMenuBtn?.setAttribute("aria-expanded", String(open));
+  if (window.matchMedia("(max-width: 820px)").matches) {
+    closeDrawerBtn.setAttribute("aria-expanded", String(open));
+    closeDrawerBtn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  }
 }
 
 const MODEL_CHIP_LABELS = {
@@ -310,31 +324,61 @@ function selectModel(model) {
 }
 
 function syncViewLayout() {
-  const isHome = !homeView.hidden;
+  const isWorkspace = !workspaceView.hidden && !workspaceView.classList.contains("mobile-drawer-host");
   const isMobile = window.matchMedia("(max-width: 820px)").matches;
-  if (isHome && isMobile) {
+  if (!isWorkspace && isMobile && ( !homeView.hidden || (privacyView && !privacyView.hidden) )) {
     workspaceView.hidden = false;
     workspaceView.classList.add("mobile-drawer-host");
+  } else if (homeView.hidden && (!privacyView || privacyView.hidden)) {
+    workspaceView.classList.remove("mobile-drawer-host");
+    workspaceView.hidden = false;
   } else {
     workspaceView.classList.remove("mobile-drawer-host");
-    workspaceView.hidden = isHome;
+    workspaceView.hidden = true;
   }
 }
 
-function showView(view) {
+function showView(view, scrollTargetId = null) {
   const isHome = view === "home";
+  const isPrivacy = view === "privacy";
+  const isSettings = view === "settings";
+  const isWorkspace = view === "workspace" || isSettings;
+
+  document.body.classList.toggle("workspace-active", isWorkspace);
   homeView.hidden = !isHome;
-  navHomeBtn.hidden = isHome;
-  navWorkspaceBtn.hidden = !isHome;
-  navHomeBtn.classList.toggle("active", !isHome);
-  navWorkspaceBtn.classList.toggle("active", isHome);
-  navHomeBtn.setAttribute("aria-selected", String(!isHome));
-  navWorkspaceBtn.setAttribute("aria-selected", String(isHome));
+  if (privacyView) privacyView.hidden = !isPrivacy;
+  workspaceView.classList.remove("mobile-drawer-host");
+  workspaceView.hidden = !isWorkspace;
+  workspaceMain.hidden = isSettings;
+  settingsView.hidden = !isSettings;
+
+  navHomeBtn.classList.toggle("active", isHome);
+  navPrivacyBtn?.classList.toggle("active", isPrivacy);
+  navWorkspaceBtn.classList.toggle("active", isWorkspace);
+  navWorkspaceBtn.textContent = isWorkspace ? "Workspace" : "Open workspace";
+  navHomeBtn.setAttribute("aria-selected", String(isHome));
+  navPrivacyBtn?.setAttribute("aria-selected", String(isPrivacy));
+  navWorkspaceBtn.setAttribute("aria-selected", String(isWorkspace));
+
   setDrawerOpen(false);
   setPopoverOpen(false);
   setModelPopoverOpen(false);
-  syncViewLayout();
-  if (!isHome) {
+  if (!isWorkspace) syncViewLayout();
+
+  if (scrollTargetId && isHome) {
+    requestAnimationFrame(() => {
+      document.getElementById(scrollTargetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  if (isPrivacy) renderPrivacyTester();
+
+  if (isSettings) {
+    renderProfile();
+    renderStats();
+  }
+
+  if (isWorkspace && !isSettings) {
     autoResizeEditor();
     scrollFeedToBottom();
     if (!localStorage.getItem(TOUR_KEY)) {
@@ -403,6 +447,9 @@ function selectTask(task) {
     const isSelected = btn.dataset.task === task;
     btn.classList.toggle("active", isSelected);
     btn.setAttribute("aria-checked", String(isSelected));
+  });
+  document.querySelectorAll(".chat-empty-action").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.task === task));
   });
   updateSelectedChip();
 }
@@ -533,10 +580,24 @@ function renderStats() {
   statsSummaryEl.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB text`;
   statsSummaryEl.title =
     "Estimated UTF-8 size of note and response text for on-device runs; not total network usage.";
-  statOnDeviceMeta.textContent = `${stats.onDeviceCount} · ${onAvg !== null ? formatSec(onAvg) : "—"}`;
-  statCloudMeta.textContent = `${stats.cloudCount} · ${cloudAvg !== null ? formatSec(cloudAvg) : "—"}`;
+  if (sidebarOnDevicePct) sidebarOnDevicePct.textContent = `${onPct}%`;
+  statOnDeviceMeta.textContent = `${stats.onDeviceCount} local`;
+  statCloudMeta.textContent = `${stats.cloudCount} cloud`;
   statOnDeviceBar.style.width = `${onPct}%`;
   statCloudBar.style.width = `${cloudPct}%`;
+
+  document.querySelectorAll(".hn-route-bar").forEach((bar) => {
+    const [onDeviceSegment, cloudSegment] = bar.children;
+    if (onDeviceSegment && cloudSegment) {
+      onDeviceSegment.style.width = `${onPct}%`;
+      cloudSegment.style.width = `${cloudPct}%`;
+    }
+  });
+  document.querySelectorAll(".hn-route-summary").forEach((summary) => {
+    summary.textContent = total
+      ? `${stats.onDeviceCount} on-device · ${stats.cloudCount} cloud runs`
+      : "Run a task to see your route counts.";
+  });
 
   modalOnDevicePct.textContent = `${onPct}%`;
   modalAvoided.textContent = String(stats.cloudCallsAvoided);
@@ -724,6 +785,7 @@ function renderSidebar() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `note-item${note.id === activeId ? " active" : ""}`;
+    btn.style.setProperty("--stagger-i", String(Math.min(noteListEl.children.length, 10)));
     btn.setAttribute("role", "option");
     btn.setAttribute("aria-selected", String(note.id === activeId));
     btn.addEventListener("click", () => {
@@ -817,12 +879,42 @@ function renderThread() {
   if (!chat || chat.messages.length === 0) {
     const empty = document.createElement("div");
     empty.className = "chat-empty";
+    const kicker = document.createElement("span");
+    kicker.className = "chat-empty-kicker";
+    kicker.textContent = "START WITH A STUDY TASK";
     const h3 = document.createElement("h3");
-    h3.textContent = "Ready when you are";
+    h3.textContent = "What are you studying?";
     const p = document.createElement("p");
     p.textContent =
-      "Paste lecture notes or a study prompt below. Every message and AI summary stays saved locally on your device.";
-    empty.append(h3, p);
+      "Write or paste your notes below, then choose a task. Routing depends on the task, your settings, and device availability.";
+    const actions = document.createElement("div");
+    actions.className = "chat-empty-actions";
+    const quickTasks = [
+      ["summarize", "Summarize", "Find the main ideas in your notes."],
+      ["quiz", "Quiz me", "Turn notes into questions to practise."],
+      ["todos", "Make a to-do list", "Pull out study tasks and next steps."],
+    ];
+    for (const [index, [task, title, description]] of quickTasks.entries()) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "chat-empty-action";
+      button.setAttribute("aria-pressed", String(selectedTask === task));
+      const number = document.createElement("span");
+      number.className = "chat-empty-action-number";
+      number.textContent = String(index + 1).padStart(2, "0");
+      const label = document.createElement("strong");
+      label.textContent = title;
+      const detail = document.createElement("span");
+      detail.textContent = description;
+      button.append(number, label, detail);
+      button.addEventListener("click", () => {
+        selectTask(task);
+        contentInput.focus();
+      });
+      button.dataset.task = task;
+      actions.appendChild(button);
+    }
+    empty.append(kicker, h3, p, actions);
     if (!localStorage.getItem(TOUR_KEY)) {
       const demoBtn = document.createElement("button");
       demoBtn.type = "button";
@@ -949,6 +1041,7 @@ function renderThread() {
         msg.quizItems.forEach((item, qIdx) => {
           const qCard = document.createElement("div");
           qCard.className = "quiz-card";
+          qCard.style.setProperty("--stagger-i", String(qIdx));
 
           const qTitle = document.createElement("p");
           qTitle.className = "quiz-q";
@@ -1011,6 +1104,14 @@ function renderThread() {
         scoreBar.textContent = `Score: ${correctCount} / ${msg.quizItems.length} (${answeredCount} answered)`;
         quizList.appendChild(scoreBar);
 
+        if (answeredCount === msg.quizItems.length && msg.quizItems.length > 0) {
+          const peakBanner = document.createElement("div");
+          peakBanner.className = "peak-end-banner";
+          const perfect = correctCount === msg.quizItems.length;
+          peakBanner.innerHTML = `<span>${perfect ? "Perfect score!" : "Quiz complete!"} ${correctCount} / ${msg.quizItems.length}</span><span class="mono">${perfect ? "100% mastered" : "Missed cards saved to Study Loop"}</span>`;
+          quizList.appendChild(peakBanner);
+        }
+
         card.append(header, reason, quizList);
       } else {
         const body = document.createElement("div");
@@ -1062,8 +1163,15 @@ function renderThread() {
           const autoSwitchBtn = document.createElement("button");
           autoSwitchBtn.type = "button";
           autoSwitchBtn.className = "pill-btn btn-primary";
-          autoSwitchBtn.textContent = "Switch to Auto (Cloud) →";
+          autoSwitchBtn.textContent = "Switch to Auto (Cloud)";
           autoSwitchBtn.addEventListener("click", () => {
+            const activeChat = getActiveNote();
+            if (activeChat?.isPrivate) {
+              activeChat.isPrivate = false;
+              if (privateToggle) privateToggle.checked = false;
+              saveNotes();
+              renderAll();
+            }
             selectModel("auto");
             contentInput.focus();
           });
@@ -1747,9 +1855,74 @@ async function handleRun() {
 }
 
 navHomeBtn.addEventListener("click", () => showView("home"));
+brandHomeBtn?.addEventListener("click", () => showView("home"));
+sidebarHomeBtn?.addEventListener("click", () => showView("home"));
+navFeaturesBtn?.addEventListener("click", () => showView("home", "features"));
+navPrivacyBtn?.addEventListener("click", () => showView("privacy"));
+navOssBtn?.addEventListener("click", () => showView("home", "oss"));
 navWorkspaceBtn.addEventListener("click", () => showView("workspace"));
 launchWorkspaceBtn.addEventListener("click", () => showView("workspace"));
 footerLaunchBtn?.addEventListener("click", () => showView("workspace"));
+footerPrivacyBtn?.addEventListener("click", () => showView("privacy"));
+document.getElementById("priv-open-ws-btn")?.addEventListener("click", () => showView("workspace"));
+document.getElementById("priv-footer-home-btn")?.addEventListener("click", () => showView("home"));
+document.getElementById("priv-profile-btn")?.addEventListener("click", () => {
+  openSettings();
+});
+
+// === Privacy Page Live PII Redactor ===
+const privTestInput = document.getElementById("priv-test-input");
+const privTestOutput = document.getElementById("priv-test-output");
+const privMaskCount = document.getElementById("priv-mask-count");
+const privSimPrivate = document.getElementById("priv-sim-private");
+const privSimDeep = document.getElementById("priv-sim-deep");
+const privRouteBadge = document.getElementById("priv-route-badge");
+
+function renderPrivacyTester() {
+  if (!privTestInput || !privTestOutput) return;
+  if (!privTestInput.value) {
+    privTestInput.value = "Bio lab partner: sam.irfan@college.edu, phone +91 98765 43210, ID 20264819. Review ATP synthesis.";
+  }
+  const { sanitizedText, maskedCount } = sanitizeForCloud(privTestInput.value);
+  privTestOutput.innerHTML = escapeHtml(sanitizedText).replace(
+    /\[(REDACTED_EMAIL|REDACTED_PHONE|REDACTED_ID)\]/g,
+    '<span class="hn-redact-token">[$1]</span>'
+  );
+  if (privMaskCount) {
+    privMaskCount.textContent = maskedCount
+      ? `${maskedCount} identifier${maskedCount === 1 ? "" : "s"} masked`
+      : "No identifiers matched by the current rules";
+  }
+
+  if (privRouteBadge) {
+    const r = decideRoute({
+      task: privSimDeep?.checked ? "deep-analyze" : "auto",
+      text: privTestInput.value,
+      isPrivate: Boolean(privSimPrivate?.checked),
+      isOffline: isAppOffline(),
+      maxOnDeviceChars,
+    });
+    privRouteBadge.textContent = `Route: ${r.mode || "BLOCKED"}`;
+    privRouteBadge.className = `badge mono ${r.mode?.includes("ON_DEVICE") ? "badge-on-device" : "badge-cloud"}`;
+  }
+}
+
+privTestInput?.addEventListener("input", renderPrivacyTester);
+privSimPrivate?.addEventListener("change", renderPrivacyTester);
+privSimDeep?.addEventListener("change", renderPrivacyTester);
+document.querySelectorAll(".priv-preset-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (!privTestInput) return;
+    if (btn.dataset.preset === "email") {
+      privTestInput.value = "Email Dr. Rao at rao.lab@university.edu with student ID 20264819 before Friday.";
+    } else if (btn.dataset.preset === "phone") {
+      privTestInput.value = "Call lab partner on +91 98765 43210 or 555-019-2834 for organic chem notes.";
+    } else {
+      privTestInput.value = "Mitochondria produce ATP via oxidative phosphorylation across the inner membrane.";
+    }
+    renderPrivacyTester();
+  });
+});
 
 simOfflineToggle.addEventListener("change", () => {
   if (mobileSimOfflineToggle) mobileSimOfflineToggle.checked = simOfflineToggle.checked;
@@ -1764,7 +1937,22 @@ window.addEventListener("resize", syncViewLayout);
 mobileMenuBtn.addEventListener("click", () => {
   setDrawerOpen(!sidebar.classList.contains("drawer-open"));
 });
-closeDrawerBtn.addEventListener("click", () => setDrawerOpen(false));
+settingsMenuBtn?.addEventListener("click", () => {
+  setDrawerOpen(!sidebar.classList.contains("drawer-open"));
+});
+closeDrawerBtn.addEventListener("click", () => {
+  if (window.matchMedia("(max-width: 820px)").matches) {
+    setDrawerOpen(false);
+    return;
+  }
+  const isExpanded = closeDrawerBtn.getAttribute("aria-expanded") === "true";
+  workspaceView.classList.toggle("sidebar-collapsed", isExpanded);
+  closeDrawerBtn.setAttribute("aria-expanded", String(!isExpanded));
+  closeDrawerBtn.setAttribute(
+    "aria-label",
+    isExpanded ? "Expand sidebar" : "Collapse sidebar"
+  );
+});
 drawerBackdrop.addEventListener("click", () => setDrawerOpen(false));
 
 taskMenuBtn.addEventListener("click", (e) => {
@@ -1818,26 +2006,6 @@ resetStatsBtn.addEventListener("click", (e) => {
   stats = { ...DEFAULT_STATS };
   saveStats();
   renderStats();
-});
-
-statsCard.addEventListener("click", () => {
-  setDrawerOpen(false);
-  renderStats();
-  statsModal.showModal();
-});
-
-statsCard.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    setDrawerOpen(false);
-    renderStats();
-    statsModal.showModal();
-  }
-});
-
-closeStatsModal.addEventListener("click", () => statsModal.close());
-statsModal.addEventListener("click", (e) => {
-  if (e.target === statsModal) statsModal.close();
 });
 
 titleInput.addEventListener("input", () => {
@@ -2093,7 +2261,7 @@ function getInitials(name) {
 function renderProfile() {
   const initials = getInitials(profile.name);
   if (profileAvatarInitials) profileAvatarInitials.textContent = initials;
-  if (profileModalInitials) profileModalInitials.textContent = initials;
+  if (settingsAvatarInitials) settingsAvatarInitials.textContent = initials;
   if (sidebarAvatarInitials) sidebarAvatarInitials.textContent = initials;
   if (sidebarProfileName) sidebarProfileName.textContent = profile.name || "Student";
   if (profileNameInput && profileNameInput.value !== profile.name) {
@@ -2126,31 +2294,41 @@ function renderProfile() {
     profileQuotaBar.style.width = `${pct}%`;
   }
 
-  const totalRuns = stats.onDeviceCount + stats.cloudCount;
-  const onPct = totalRuns ? Math.round((stats.onDeviceCount / totalRuns) * 100) : 0;
-  const estimatedKb = (stats.estimatedTextBytes / 1024).toFixed(1);
-  if (profileSavingsLine) {
-    profileSavingsLine.textContent = `${onPct}% on-device · ${stats.cloudCallsAvoided} cloud calls avoided · ~${estimatedKb} KB note + response text processed locally`;
-  }
 }
 
-profileBtn?.addEventListener("click", () => {
-  renderProfile();
-  profileModal?.showModal();
-});
+function selectSettingsTab(activeTab) {
+  const selectedTab = Array.from(settingsTabs).find((tab) => tab.dataset.settingsTab === activeTab);
+  if (!selectedTab) return;
+
+  settingsTabs.forEach((tab) => {
+    const isActive = tab === selectedTab;
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  });
+  settingsPanels.forEach((panel) => {
+    panel.hidden = panel.id !== `settings-panel-${activeTab}`;
+  });
+}
+
+function openSettings(tab = "profile") {
+  selectSettingsTab(tab);
+  showView("settings");
+}
+
+profileBtn?.addEventListener("click", () => openSettings());
 sidebarProfileBtn?.addEventListener("click", () => {
   setDrawerOpen(false);
-  renderProfile();
-  profileModal?.showModal();
+  openSettings();
+});
+settingsBackBtn?.addEventListener("click", () => showView("workspace"));
+settingsTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    selectSettingsTab(tab.dataset.settingsTab);
+  });
 });
 sidebarStatsBtn?.addEventListener("click", () => {
   setDrawerOpen(false);
-  renderStats();
-  statsModal?.showModal();
-});
-closeProfileModal?.addEventListener("click", () => profileModal?.close());
-profileModal?.addEventListener("click", (e) => {
-  if (e.target === profileModal) profileModal.close();
+  openSettings("usage");
 });
 
 profileNameInput?.addEventListener("input", () => {
@@ -2226,15 +2404,8 @@ profileImportInput?.addEventListener("change", async () => {
 });
 
 profileTourBtn?.addEventListener("click", () => {
-  profileModal?.close();
   showView("workspace");
   openDemoModal(0);
-});
-
-profileStatsBtn?.addEventListener("click", () => {
-  profileModal?.close();
-  renderStats();
-  statsModal?.showModal();
 });
 
 profileClearBtn?.addEventListener("click", () => {
@@ -2249,7 +2420,6 @@ profileClearBtn?.addEventListener("click", () => {
   activeId = notes[0]?.id || null;
   renderAll();
   renderProfile();
-  profileModal?.close();
 });
 
 initCarousel();
@@ -2260,7 +2430,6 @@ updateSelectedChip();
 renderAll();
 
 // === Composer File & Image Drop / Paste ===
-let pendingAttachment = null;
 const editorWrapEl = document.getElementById("editor-wrap");
 const attachmentPreviewEl = document.getElementById("attachment-preview");
 const attachmentThumbEl = document.getElementById("attachment-thumb");
@@ -2468,3 +2637,61 @@ toggleHybridCompareBtn?.addEventListener("click", () => {
   hybridCompareView.hidden = nextHidden;
   toggleHybridCompareBtn.setAttribute("aria-expanded", String(!nextHidden));
 });
+
+// === Live 3D Hero & Touchable Surface Controller ===
+function initTouchable3DSurfaces() {
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  if (reducedMotion) return;
+
+  const surfaces = document.querySelectorAll(
+    ".hero-mockup, .bento-card, .experience-card-blue, .landing-title-tile"
+  );
+
+  surfaces.forEach((el) => {
+    el.classList.add("touch-3d");
+    const isTile = el.classList.contains("landing-title-tile");
+    const maxTilt = isTile ? 10 : 5.5;
+    let rafId = null;
+
+    const updateTilt = (clientX, clientY) => {
+      const rect = el.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const px = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const py = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+      const tiltY = (px - 0.5) * maxTilt * 2;
+      const tiltX = (0.5 - py) * maxTilt * 2;
+
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        el.classList.add("is-interacting");
+        el.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+        el.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+        el.style.setProperty("--mx", `${(px * 100).toFixed(1)}%`);
+        el.style.setProperty("--my", `${(py * 100).toFixed(1)}%`);
+        el.style.setProperty("--glow-opacity", "1");
+      });
+    };
+
+    const resetTilt = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      el.classList.remove("is-interacting");
+      el.style.setProperty("--tilt-x", "0deg");
+      el.style.setProperty("--tilt-y", "0deg");
+      el.style.setProperty("--glow-opacity", "0");
+    };
+
+    el.addEventListener("pointermove", (e) => {
+      updateTilt(e.clientX, e.clientY);
+    });
+    el.addEventListener("pointerdown", (e) => {
+      updateTilt(e.clientX, e.clientY);
+    });
+    el.addEventListener("pointerleave", resetTilt);
+    el.addEventListener("pointerup", resetTilt);
+    el.addEventListener("pointercancel", resetTilt);
+  });
+}
+
+initTouchable3DSurfaces();
+
+document.getElementById("hero-demo-btn")?.addEventListener("click", () => openDemoModal(0));

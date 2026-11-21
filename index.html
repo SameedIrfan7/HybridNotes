@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -24,19 +24,10 @@
 
     <nav class="top-nav glass-panel" aria-label="Primary navigation">
       <div class="brand-group">
-        <button
-          id="mobile-menu-btn"
-          type="button"
-          class="pill-btn mobile-only-btn"
-          aria-label="Open notes drawer"
-          aria-expanded="false"
-        >
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M3 6h14M3 10h14M3 14h14" stroke-linecap="round" />
-          </svg>
+        <button id="brand-home-btn" type="button" class="brand-home-btn" aria-label="HybridNotes home">
+          <img src="/icon.svg" alt="" class="brand-logo" width="22" height="22" />
+          <span class="brand">HybridNotes</span>
         </button>
-        <img src="/icon.svg" alt="" class="brand-logo" width="22" height="22" />
-        <span class="brand">HybridNotes</span>
       </div>
 
       <div class="nav-tabs" role="tablist" aria-label="App views">
@@ -47,7 +38,30 @@
           role="tab"
           aria-selected="true"
         >
-          ← Home
+          Home
+        </button>
+        <button
+          id="nav-features-btn"
+          type="button"
+          class="pill-btn nav-tab"
+        >
+          Features
+        </button>
+        <button
+          id="nav-privacy-btn"
+          type="button"
+          class="pill-btn nav-tab"
+          role="tab"
+          aria-selected="false"
+        >
+          Privacy
+        </button>
+        <button
+          id="nav-oss-btn"
+          type="button"
+          class="pill-btn nav-tab"
+        >
+          Open source
         </button>
         <button
           id="nav-workspace-btn"
@@ -56,7 +70,7 @@
           role="tab"
           aria-selected="false"
         >
-          Workspace →
+          Open workspace
         </button>
       </div>
 
@@ -92,406 +106,455 @@
       </div>
     </nav>
 
-    <section id="home-view" class="home-view" aria-label="About HybridNotes">
-      <header class="landing-hero">
-        <span class="hero-pill glass-pill">
-          <span class="brand-dot" aria-hidden="true"></span>
-          <span>Study tools that work online or offline</span>
-        </span>
-        <h1 class="landing-title" aria-label="Learn better. Remember more.">
-          <span class="landing-title-line">
-            <span class="landing-title-tile tile-red">Learn</span>
-            <span class="landing-title-tile tile-cream">better.</span>
-          </span>
-          <span class="landing-title-line">
-            <span class="landing-title-tile tile-red">Remember</span>
-            <span class="landing-title-tile tile-blue">more.</span>
-          </span>
-        </h1>
-        <p class="landing-sub">
-          Turn class notes into quizzes, summaries, and review cards. Supported tasks can stay on your
-          device; cloud tasks mask common identifiers first.
-        </p>
-        <div class="landing-cta-row">
-          <button id="launch-workspace-btn" type="button" class="btn-primary pill-btn btn-lg">
-            <span>Open Notes Workspace</span>
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
-          <a href="#experience-section" class="pill-btn btn-lg">Try a sample</a>
-        </div>
+    <section id="home-view" class="home-view hn-landing" aria-label="About HybridNotes">
+      <div class="hn-hero-glow" aria-hidden="true"></div>
 
-        <div class="hero-mockup glass-panel reveal-drop" aria-label="Animated example of how HybridNotes routes a note">
-          <div class="mockup-bar">
-            <span class="mockup-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="mono mockup-url">HOW A NOTE MOVES</span>
-            <span class="route-demo-caption">
-              <span class="route-demo-pulse" aria-hidden="true"></span>
-              Animated example · not a live request
-            </span>
-          </div>
-          <div class="route-demo-sequence">
-            <article class="route-demo-step">
-              <span class="route-demo-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
-                  <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" />
-                </svg>
-              </span>
-              <div class="route-demo-step-copy">
-                <span class="route-demo-step-label">01 · YOUR NOTE</span>
-                <h3>Write what you learned.</h3>
-                <p>“Cells turn glucose into energy.”</p>
-              </div>
-            </article>
-            <span class="route-demo-arrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12h15m-6-6 6 6-6 6" />
-              </svg>
-            </span>
-            <article class="route-demo-step">
-              <span class="route-demo-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="6" cy="6" r="2" />
-                  <circle cx="18" cy="18" r="2" />
-                  <path d="M8 6h5a3 3 0 0 1 3 3v6M6 8v7a3 3 0 0 0 3 3h7" />
-                </svg>
-              </span>
-              <div class="route-demo-step-copy">
-                <span class="route-demo-step-label">02 · SMART CHECK</span>
-                <h3>Pick the right route.</h3>
-                <p>Task · length · Private · Offline</p>
-              </div>
-            </article>
-            <span class="route-demo-arrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12h15m-6-6 6 6-6 6" />
-              </svg>
-            </span>
-            <article class="route-demo-step">
-              <span class="route-demo-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="4" y="3" width="16" height="13" rx="2" />
-                  <path d="M2.5 20h19M9 16l-1 4m7-4 1 4M9 8l2 2 4-4" />
-                </svg>
-              </span>
-              <div class="route-demo-step-copy">
-                <span class="route-demo-step-label">03 · EXAMPLE RESULT</span>
-                <h3>Keep this prompt local.</h3>
-                <p>Gemini Nano · when available</p>
-              </div>
-            </article>
-          </div>
-          <div class="route-demo-outcome">
-            <span class="route-demo-outcome-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3 5 6v5c0 4.5 2.9 8.3 7 10 4.1-1.7 7-5.5 7-10V6l-7-3Z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </span>
-            <div>
-              <span class="route-demo-outcome-label">YOUR CHOICE, EVERY TIME</span>
-              <p>Private or offline notes stay on your device. Cloud tasks mask common identifiers first.</p>
-            </div>
-          </div>
+      <header class="hn-hero">
+        <div class="hn-badge-pill rise s2">
+          <span class="hn-dot" aria-hidden="true"></span>
+          <span>Open source · Apache-2.0</span>
+        </div>
+        <h1 class="hn-h1 rise s3">
+          Study notes that work <span>without Wi&#8209;Fi.</span>
+        </h1>
+        <p class="hn-sub rise s4">
+          Save notes, quiz yourself and review on a schedule. Supported tasks can run on your device when Gemini Nano is available; cloud tasks mask common identifiers first.
+        </p>
+        <div class="hn-cta-row rise s5">
+          <button id="launch-workspace-btn" type="button" class="hn-btn hn-btn-coral cta">
+            Start studying — free
+          </button>
+          <button id="hero-demo-btn" type="button" class="hn-link-btn">
+            Watch 15s demo →
+          </button>
         </div>
       </header>
 
-      <div class="spectrum-bar reveal-drop" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
+      <section class="hn-stage" aria-label="Sample workspace preview">
+        <div class="hn-cube-wrap bob" aria-hidden="true">
+          <div class="cube">
+            <div class="face f1">Notes</div>
+            <div class="face f2">Quiz</div>
+            <div class="face f3">Offline</div>
+            <div class="face f4">Private</div>
+            <div class="face f5">Loop</div>
+            <div class="face f6">Anki</div>
+          </div>
+        </div>
+        <span class="chip hn-float-chip" aria-hidden="true">● Saved notes work offline</span>
+
+        <div class="hn-preview-window scroll">
+          <div class="hn-preview-bar">
+            <span class="hn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="hn-status-pill">Sample preview · not a live request</span>
+          </div>
+          <div class="hn-preview-body">
+            <div class="hn-preview-nav" aria-hidden="true">
+              <div class="hn-nav-label">NOTES</div>
+              <div class="ni n1">Cell biology</div>
+              <div class="ni n2">Organic chemistry</div>
+              <div class="ni n3">World history</div>
+              <div class="ni n4">Calculus II</div>
+            </div>
+            <div class="hn-preview-main">
+              <div class="np p1">
+                <div class="hn-note-h">Cell biology</div>
+                <p class="hn-note-p">Mitochondria turn glucose into usable energy. Most ATP is produced during the electron transport chain, inside the inner membrane.</p>
+                <div class="hn-quiz-box">
+                  <div class="hn-quiz-tag">SAMPLE · QUIZ ME</div>
+                  <div class="hn-quiz-q">Which cell part makes most of its usable energy?</div>
+                  <div class="hn-quiz-pills">
+                    <span>Nucleus</span>
+                    <span class="hn-pill-active cta">Mitochondrion</span>
+                    <span>Ribosome</span>
+                  </div>
+                </div>
+              </div>
+              <div class="np p2">
+                <div class="hn-note-h">Organic chemistry</div>
+                <p class="hn-note-p">Functional groups decide how a molecule reacts. A hydroxyl group (–OH) makes an alcohol, while a carbonyl (C=O) sits at the heart of ketones and aldehydes.</p>
+                <div class="hn-quiz-box">
+                  <div class="hn-quiz-tag">SAMPLE · QUIZ ME</div>
+                  <div class="hn-quiz-q">Which group defines an alcohol?</div>
+                  <div class="hn-quiz-pills">
+                    <span>Carbonyl</span>
+                    <span class="hn-pill-active cta">Hydroxyl</span>
+                    <span>Amine</span>
+                  </div>
+                </div>
+              </div>
+              <div class="np p3">
+                <div class="hn-note-h">World history</div>
+                <p class="hn-note-p">The printing press arrived in Europe around 1450. It made books far cheaper and helped ideas spread faster than ever before.</p>
+                <div class="hn-quiz-box">
+                  <div class="hn-quiz-tag">SAMPLE · QUIZ ME</div>
+                  <div class="hn-quiz-q">Who introduced movable-type printing in Europe?</div>
+                  <div class="hn-quiz-pills">
+                    <span>Columbus</span>
+                    <span>Newton</span>
+                    <span class="hn-pill-active cta">Gutenberg</span>
+                  </div>
+                </div>
+              </div>
+              <div class="np p4">
+                <div class="hn-note-h">Calculus II</div>
+                <p class="hn-note-p">Integration by parts reverses the product rule. Choose u so that its derivative becomes simpler, then integrate what remains.</p>
+                <div class="hn-quiz-box">
+                  <div class="hn-quiz-tag">SAMPLE · QUIZ ME</div>
+                  <div class="hn-quiz-q">Which rule does integration by parts reverse?</div>
+                  <div class="hn-quiz-pills">
+                    <span>Chain rule</span>
+                    <span class="hn-pill-active cta">Product rule</span>
+                    <span>Quotient rule</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="prog" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section id="how" class="hn-features hn-how-section">
+        <div class="hn-kicker" style="color:#7AB6FF">HOW IT WORKS</div>
+        <h2 class="hn-h2 scroll">Write. Check. <span class="sf" style="color:#FF5A4F">Remember.</span></h2>
+        <div class="hn-how-grid">
+          <div class="hn-card">
+            <div class="hn-how-circle" style="background:#F5F2EC;color:#0B0B0C">01</div>
+            <div>
+              <div class="hn-card-h">Write</div>
+              <p class="hn-card-p">Type or drop in your notes.</p>
+            </div>
+          </div>
+          <div class="hn-card">
+            <div class="hn-how-circle" style="background:#FF5A4F;color:#0B0B0C">02</div>
+            <div>
+              <div class="hn-card-h">Stay private</div>
+              <p class="hn-card-p">Supported tasks can run on your device when Gemini Nano is available.</p>
+            </div>
+          </div>
+          <div class="hn-card">
+            <div class="hn-how-circle" style="background:#7AB6FF;color:#0B0B0C">03</div>
+            <div>
+              <div class="hn-card-h">Remember</div>
+              <p class="hn-card-p">Quizzes return on a smart schedule.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="hn-features">
+        <div class="hn-kicker" style="color:#7AB6FF">WHY HYBRIDNOTES</div>
+        <h2 class="hn-h2 scroll">Built for the library, the train and <span class="sf" style="color:#FF5A4F">the dead zone.</span></h2>
+      </section>
+
+      <div id="privacy" class="hn-marquee-section">
+        <div class="hn-mq">
+          <div class="hn-tr cards">
+            <div class="hn-cd c1">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+                <h3>Common identifiers masked</h3>
+                <p>Pattern-matched emails, phone numbers and 6+ digit IDs are redacted locally before cloud requests.</p>
+              </div>
+              <div class="mono hn-cd-foot-col">
+                <span class="hn-cd-strike">sam.irfan@college.edu</span>
+                <span class="hn-cd-dark-pill">••••••@•••••.edu</span>
+              </div>
+            </div>
+            <div class="hn-cd c2">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+                <h3>On-device when available</h3>
+                <p>Supported tasks can run locally when Gemini Nano is ready.</p>
+              </div>
+              <div class="hn-cd-stat">Nano<span class="mono">local AI option</span></div>
+            </div>
+            <div class="hn-cd c1">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 012 2v12"/></svg>
+                <h3>Instant flashcards</h3>
+                <p>Drop in slides, get a quiz.</p>
+              </div>
+              <div class="mono hn-cd-pills"><span class="hn-pl">Slides → Quiz</span><span class="hn-pl">Anki .csv</span></div>
+            </div>
+            <div class="hn-cd c2">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 01-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0115.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+                <h3>Study Loop</h3>
+                <p>Miss one, see it tomorrow.</p>
+              </div>
+              <div class="mono hn-cd-pills">
+                <span class="hn-cd-dark-pill" style="padding:7px 11px">Tomorrow</span>
+                <span class="hn-pl">3d</span>
+                <span class="hn-pl">7d</span>
+                <span class="hn-pl">14d</span>
+              </div>
+            </div>
+            <div class="hn-cd c1">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+                <h3>Routes that adapt</h3>
+                <p>Task, note length, privacy settings and Nano availability shape each route.</p>
+              </div>
+              <div>
+                <div class="hn-cd-bar hn-route-bar"><span></span><span></span></div>
+                <div class="mono hn-cd-bar-sub hn-route-summary">Run a task to see your route counts.</div>
+              </div>
+            </div>
+            <div class="hn-cd c3">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                <h3>Export anywhere</h3>
+                <p>Notes to Markdown, cards to Anki.</p>
+              </div>
+              <div class="mono hn-cd-pills"><span class="hn-pl">Export .md</span><span class="hn-pl">Anki .csv</span></div>
+            </div>
+            <!-- Duplicate set for seamless infinite marquee -->
+            <div class="hn-cd c1" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+                <h3>Common identifiers masked</h3>
+                <p>Pattern-matched emails, phone numbers and 6+ digit IDs are redacted locally before cloud requests.</p>
+              </div>
+              <div class="mono hn-cd-foot-col">
+                <span class="hn-cd-strike">sam.irfan@college.edu</span>
+                <span class="hn-cd-dark-pill">••••••@•••••.edu</span>
+              </div>
+            </div>
+            <div class="hn-cd c2" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+                <h3>On-device when available</h3>
+                <p>Supported tasks can run locally when Gemini Nano is ready.</p>
+              </div>
+              <div class="hn-cd-stat">Nano<span class="mono">local AI option</span></div>
+            </div>
+            <div class="hn-cd c1" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 012 2v12"/></svg>
+                <h3>Instant flashcards</h3>
+                <p>Drop in slides, get a quiz.</p>
+              </div>
+              <div class="mono hn-cd-pills"><span class="hn-pl">Slides → Quiz</span><span class="hn-pl">Anki .csv</span></div>
+            </div>
+            <div class="hn-cd c2" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 01-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0115.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+                <h3>Study Loop</h3>
+                <p>Miss one, see it tomorrow.</p>
+              </div>
+              <div class="mono hn-cd-pills">
+                <span class="hn-cd-dark-pill" style="padding:7px 11px">Tomorrow</span>
+                <span class="hn-pl">3d</span>
+                <span class="hn-pl">7d</span>
+                <span class="hn-pl">14d</span>
+              </div>
+            </div>
+            <div class="hn-cd c1" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+                <h3>Routes that adapt</h3>
+                <p>Task, note length, privacy settings and Nano availability shape each route.</p>
+              </div>
+              <div>
+                <div class="hn-cd-bar hn-route-bar"><span></span><span></span></div>
+                <div class="mono hn-cd-bar-sub hn-route-summary">Run a task to see your route counts.</div>
+              </div>
+            </div>
+            <div class="hn-cd c3" aria-hidden="true">
+              <div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                <h3>Export anywhere</h3>
+                <p>Notes to Markdown, cards to Anki.</p>
+              </div>
+              <div class="mono hn-cd-pills"><span class="hn-pl">Export .md</span><span class="hn-pl">Anki .csv</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hn-mq" style="margin-top:32px" aria-hidden="true">
+          <div class="hn-tr rv">
+            <span class="hn-tk">Offline&#8209;first<i></i></span>
+            <span class="hn-tk">PII masked<i></i></span>
+            <span class="hn-tk">On&#8209;device AI<i></i></span>
+            <span class="hn-tk">Study Loop<i></i></span>
+            <span class="hn-tk">Open source<i></i></span>
+            <span class="hn-tk">Anki export<i></i></span>
+            <span class="hn-tk">Offline&#8209;first<i></i></span>
+            <span class="hn-tk">PII masked<i></i></span>
+            <span class="hn-tk">On&#8209;device AI<i></i></span>
+            <span class="hn-tk">Study Loop<i></i></span>
+            <span class="hn-tk">Open source<i></i></span>
+            <span class="hn-tk">Anki export<i></i></span>
+          </div>
+        </div>
       </div>
 
-      <section id="how-it-works" class="bento-section">
-        <div class="bento-header reveal-drop">
-          <div class="flow-pills" aria-label="Hybrid workflow steps">
-            <span class="pill-btn flow-pill active">1. Write notes</span>
-            <span class="pill-btn flow-pill">2. Protect identifiers</span>
-            <span class="pill-btn flow-pill">3. Choose a route</span>
-            <span class="pill-btn flow-pill">4. See usage</span>
+      <section id="oss" class="hn-oss-wrap">
+        <div class="hn-oss-grid">
+          <div class="hn-oss-cream">
+            <div>
+              <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              <h3>Open source</h3>
+              <p>Apache&#8209;2.0. Free to read, fork and run.</p>
+            </div>
+            <div class="hn-oss-btns">
+              <a class="hn-btn hn-oss-dark-btn" href="https://github.com/SameedIrfan7/HybridNotes" target="_blank" rel="noopener noreferrer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:8px"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+                Star on GitHub
+              </a>
+              <a class="hn-btn hn-oss-outline-btn" href="https://github.com/SameedIrfan7/HybridNotes" target="_blank" rel="noopener noreferrer">
+                Read the code
+              </a>
+            </div>
           </div>
-          <h2 class="bento-heading">What HybridNotes does with your notes.</h2>
+          <div class="hn-oss-term">
+            <div class="hn-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="mono hn-oss-cmd">
+              <span style="color:#FF5A4F">$</span> git clone <span style="color:#7AB6FF">https://github.com/SameedIrfan7/HybridNotes</span><span class="hn-cur"></span>
+            </div>
+            <div class="hn-oss-icons" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+            </div>
+          </div>
         </div>
 
-        <div class="bento-grid">
-          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 0ms">
-            <div class="bento-preview cream-grid-surface">
-              <div class="mini-card cream-mini">
-                <div class="mini-row">
-                  <span class="badge badge-cream-red"><svg class="inline-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 9.8-4-1.4-7-5.3-7-9.8V6l7-3z"/><path d="M9.5 12l1.8 1.8 3.5-3.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Masked Locally</span>
-                  <span class="mono">Before Cloud</span>
-                </div>
-                <div class="mini-code mono">
-                  sara@uni.edu → <span class="hl-red">[REDACTED_EMAIL]</span><br />
-                  ID 20264819 → <span class="hl-red">[REDACTED_ID]</span>
-                </div>
-              </div>
-            </div>
-            <h3>Identifier Redaction</h3>
-            <p>Before a cloud request, emails, phone numbers, and student IDs are masked on your device.</p>
-          </article>
-
-          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 90ms">
-            <div class="bento-preview cream-grid-surface">
-              <div class="mini-card cream-mini">
-                <div class="mini-row">
-                  <span class="badge badge-cream-dark"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> Long notes · Local</span>
-                  <span class="mono">1,200 chars/chunk</span>
-                </div>
-                <div class="mini-code mono">
-                  chunk[1/3] → Gemini Nano ✓<br />
-                  chunk[2/3] → Gemini Nano ✓<br />
-                  merged locally offline
-                </div>
-              </div>
-            </div>
-            <h3>Summarize long notes offline</h3>
-            <p>Private or offline notes are split into short parts, summarized on Gemini Nano, then joined back on your device.</p>
-          </article>
-
-          <article class="bento-card cream-card reveal-drop" style="--reveal-delay: 180ms">
-            <div class="bento-preview cream-grid-surface">
-              <div class="mini-card cream-mini">
-                <div class="mini-row">
-                  <span class="badge badge-cream-red"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 18.2L7.3 3.6c.1-.6.9-.7 1.2-.2l2.9 5.4 3.4-6.4c.3-.5 1.1-.4 1.2.2l3.5 15.6-7.5 4.2-7.5-4.2z"/></svg> Remote Config</span>
-                  <span class="mono">Live Threshold</span>
-                </div>
-                <div class="mini-code mono">
-                  on_device_max_chars: <span class="hl-red">1500</span><br />
-                  mode: <span class="hl-red">PREFER_ON_DEVICE</span><br />
-                  storage: localStorage + PWA
-                </div>
-              </div>
-            </div>
-            <h3>Clear routing and usage stats</h3>
-            <p>See which tasks ran locally or in the cloud, how long they took, and an estimate of text processed locally.</p>
-          </article>
+        <div class="hn-oss" style="padding-top:96px">
+          <h2 class="hn-h2-big scroll pop">Learn better.<br><span class="sf">Remember more.</span></h2>
+          <div class="hn-cta-row">
+            <button id="footer-launch-btn" type="button" class="hn-btn hn-btn-cream">
+              Open workspace
+            </button>
+            <a class="hn-btn hn-btn-outline" href="https://github.com/SameedIrfan7/HybridNotes" target="_blank" rel="noopener noreferrer">
+              Star on GitHub
+            </a>
+          </div>
         </div>
       </section>
 
-      <section id="experience-section" class="experience-section glass-panel reveal-drop" aria-labelledby="experience-title">
-        <header class="experience-header">
-          <div>
-            <span class="badge badge-on-device">Two things to try</span>
-            <h2 id="experience-title" class="experience-title">See it. Try it. Make it yours.</h2>
-            <p class="experience-intro">
-              Answer a sample question to see how reviews are spaced. Change the theme to make your notes easier to read.
-            </p>
+      <footer class="hn-footer">
+        <span>HybridNotes · Apache-2.0 open-source study notes</span>
+        <span class="hn-footer-links">
+          <a href="#features">Features</a>
+          <button type="button" id="footer-privacy-btn" class="hn-footer-link-btn">Privacy</button>
+          <a href="#oss">Open source</a>
+        </span>
+      </footer>
+    </section>
+
+    <section id="privacy-view" class="home-view hn-landing" aria-label="HybridNotes Privacy Architecture" hidden>
+      <div class="hn-hero-glow" aria-hidden="true"></div>
+      <div class="hn-priv-wrap">
+        <header class="hn-hero" style="padding-bottom:24px">
+          <div class="hn-badge-pill">
+            <span class="hn-dot" style="background:#4ADE80" aria-hidden="true"></span>
+            <span>Privacy Architecture · Verifiable locally</span>
           </div>
+          <h1 class="hn-h1" style="font-size:clamp(2.3rem,6vw,4.5rem)">
+            See what stays local. <span class="sf">See what leaves.</span>
+          </h1>
+          <p class="hn-sub">
+            Private and offline requests are locked to on-device AI and do not fall back to cloud. Cloud requests redact common, pattern-matched identifiers locally first.
+          </p>
         </header>
 
-        <div class="experience-grid">
-          <article class="experience-card glass-subpanel" aria-labelledby="study-loop-demo-title">
-            <div class="experience-card-header">
-              <span class="badge badge-on-device">Study Loop</span>
-              <span class="mono experience-kicker">Sample · not saved</span>
-            </div>
-            <h3 id="study-loop-demo-title" class="experience-card-title">Try a review question</h3>
-            <p class="study-loop-demo-question">Which cell part makes most of its usable energy?</p>
-            <div id="study-loop-demo-options" class="quiz-options" role="group" aria-label="Sample answer choices">
-              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="false">The nucleus</button>
-              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="true">The mitochondrion</button>
-              <button type="button" class="quiz-opt-btn study-loop-demo-option" data-correct="false">The ribosome</button>
-            </div>
-            <p id="study-loop-demo-feedback" class="quiz-feedback" role="status" aria-live="polite" hidden></p>
-            <button id="study-loop-demo-reset" type="button" class="pill-btn btn-ghost experience-reset" hidden>
-              Try the sample again
-            </button>
-            <ol class="study-loop-timeline" aria-label="Study Loop review schedule">
-              <li><span>Miss a quiz answer</span><strong>Review tomorrow</strong></li>
-              <li><span>Remember it</span><strong>Next in 3 days</strong></li>
-              <li><span>Keep remembering</span><strong>7, then 14 days</strong></li>
-            </ol>
-            <button id="study-loop-demo-start-btn" type="button" class="btn-primary pill-btn experience-cta">
-              Make my own quiz →
-            </button>
-          </article>
-
-          <article class="experience-card glass-subpanel" aria-labelledby="theme-demo-title">
-            <div class="experience-card-header">
-              <span class="badge badge-cloud">Reading theme</span>
-              <span class="mono experience-kicker">Saved on this device</span>
-            </div>
-            <div class="theme-demo-heading">
-              <div>
-                <h3 id="theme-demo-title" class="experience-card-title">Choose light or dark.</h3>
-                <p class="theme-demo-copy">Tap the sun or moon to change the whole page.</p>
-              </div>
-              <button type="button" class="theme-toggle" aria-label="Switch to light theme" title="Switch to light theme">
-                <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
-                </svg>
-                <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
-                </svg>
-              </button>
-            </div>
-            <div class="theme-demo-preview">
-              <span class="mono">YOUR NOTES</span>
-              <strong>Comfortable reading, your way.</strong>
-              <p>Your theme choice stays saved when you come back.</p>
-            </div>
-            <p class="theme-demo-footnote">The sample quiz is just a demo. Your real review cards stay on this device.</p>
-          </article>
+        <div class="hn-priv-stats">
+          <div class="hn-priv-tile hn-tile-cream">
+            <span class="mono hn-tile-kicker">PRIVATE &amp; OFFLINE REQUESTS</span>
+            <strong class="hn-tile-big">0 KB</strong>
+            <p>AI prompts are blocked from cloud routing in these modes. Gemini Nano must be available to run them.</p>
+          </div>
+          <div class="hn-priv-tile hn-tile-coral">
+            <span class="mono hn-tile-kicker">BEFORE CLOUD FALLBACK</span>
+            <strong class="hn-tile-big">Masked</strong>
+            <p>Common, pattern-matched emails, phone numbers, and 6+ digit IDs are redacted locally before cloud requests.</p>
+          </div>
+          <div class="hn-priv-tile hn-tile-blue">
+            <span class="mono hn-tile-kicker">OPEN SOURCE</span>
+            <strong class="hn-tile-big">Apache&#8209;2.0</strong>
+            <p>Every routing rule and redaction pattern is public and auditable.</p>
+          </div>
         </div>
-      </section>
 
-      <section class="process-section glass-panel reveal-drop" aria-label="How Nano and Cloud work together">
-        <div class="process-top">
+        <div class="hn-preview-window" style="margin-top:40px">
+          <div class="hn-preview-bar" style="flex-wrap:wrap;gap:8px">
+            <span class="hn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="mono" style="font-size:12px;color:var(--muted);margin-left:8px">LOCAL REDACTION PREVIEW</span>
+            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="pill-btn btn-ghost priv-preset-btn" data-preset="email">Email &amp; ID</button>
+              <button type="button" class="pill-btn btn-ghost priv-preset-btn" data-preset="phone">Phone &amp; Lab</button>
+              <button type="button" class="pill-btn btn-ghost priv-preset-btn" data-preset="clean">Clean Note</button>
+            </div>
+          </div>
+          <div class="hn-priv-tester-grid">
+            <div>
+              <label for="priv-test-input" class="mono hn-nav-label" style="display:block">YOUR LOCAL NOTE</label>
+              <textarea id="priv-test-input" class="hn-priv-textarea" rows="4" placeholder="Paste text with an email, phone number, or 6+ digit ID..."></textarea>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span class="mono hn-nav-label" style="margin:0">MASKED TEXT PREVIEW</span>
+                <span id="priv-mask-count" class="mono" style="font-size:12px;color:#7AB6FF">0 patterns matched</span>
+              </div>
+              <div id="priv-test-output" class="hn-priv-output"></div>
+            </div>
+          </div>
+          <div class="hn-priv-tester-bar">
+            <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)">
+              <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="priv-sim-private" class="switch-input" />
+                <span>Private toggle ON</span>
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="priv-sim-deep" class="switch-input" />
+                <span>Task: Deep Analyze / Translate</span>
+              </label>
+            </div>
+            <span id="priv-route-badge" class="badge badge-on-device mono">Route: PREFER_ON_DEVICE</span>
+          </div>
+        </div>
+
+        <div class="hn-bento-grid" style="margin-top:28px">
+          <div class="hn-card">
+            <div class="mono" style="font-size:12px;color:#7AB6FF">DECIDEROUTE()</div>
+            <div class="hn-priv-rules">
+              <div><span>Offline or Private ON</span><code class="mono" style="color:#4ADE80">ONLY_ON_DEVICE</code></div>
+              <div><span>Note &lt; threshold</span><code class="mono" style="color:#4ADE80">PREFER_ON_DEVICE</code></div>
+              <div><span>Deep Analyze / Translate</span><code class="mono" style="color:#FF6B5E">ONLY_IN_CLOUD · MASKED</code></div>
+              <div><span>Long note (&ge; threshold)</span><code class="mono" style="color:#FF6B5E">PREFER_IN_CLOUD · MASKED</code></div>
+            </div>
+          </div>
+          <div class="hn-card">
+            <div class="mono" style="font-size:12px;color:#FF5A4F">HONEST STORAGE &amp; SERVICES</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--muted);line-height:1.5">
+              <div><strong style="color:var(--text)">Browser localStorage:</strong> Notes and stats are saved locally and are <span style="color:#FF6B5E">unencrypted</span> on your device.</div>
+              <div><strong style="color:var(--text)">Chrome Gemini Nano:</strong> Supported prompts run locally via <code class="mono">LanguageModel</code> when the model is available.</div>
+              <div><strong style="color:var(--text)">Firebase AI Logic + App Check:</strong> Cloud requests use <code class="mono">gemini-3.5-flash-lite</code> after local pattern-based masking.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hn-card" style="margin-top:20px;min-height:auto;flex-direction:row;align-items:center;flex-wrap:wrap">
           <div>
-            <span class="badge badge-on-device">Inside the Engine</span>
-            <h2 class="process-heading">Local when you want it. Cloud when a task needs it.</h2>
+            <div class="hn-card-h">Your data, your rules.</div>
+            <p class="hn-card-p" style="margin-top:4px">Export your study notes or jump straight into the workspace.</p>
           </div>
-          <p class="process-sub">
-            Short supported tasks can stay on your device with Gemini Nano. For tasks that need cloud AI,
-            common identifiers are masked before the request.
-          </p>
-        </div>
-
-        <div class="process-cards">
-          <div class="process-card glass-subpanel">
-            <div class="process-card-head">
-              <span class="badge badge-on-device">
-                <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
-                Gemini Nano (On-Device)
-              </span>
-              <span class="mono process-cost hl-emphasis">Prompt stays on-device</span>
-            </div>
-            <p>
-              When Chrome provides Gemini Nano, supported short tasks can run on your device. The first model download needs internet.
-              Private or offline chats stay on-device.
-            </p>
-          </div>
-
-          <div class="process-card glass-subpanel">
-            <div class="process-card-head">
-              <span class="badge badge-cloud">
-                <svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg>
-                Gemini 3.5 Flash-Lite (Cloud)
-              </span>
-              <span class="mono process-cost hl-red-bright">Fast (~4s) · Masked</span>
-            </div>
-            <p>
-              Use cloud AI for <strong>Deep Analyze</strong>, <strong>Translate</strong>, and long tasks.
-              Emails, phone numbers, and student IDs are masked on your device first.
-            </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" id="priv-open-ws-btn" class="hn-btn hn-btn-cream" style="padding:11px 22px;font-size:14px">Open workspace</button>
+            <button type="button" id="priv-profile-btn" class="hn-btn hn-btn-outline" style="padding:11px 22px;font-size:14px">Local profile &amp; export</button>
           </div>
         </div>
+      </div>
 
-        <div class="process-diagram-wrap" aria-label="End-to-end routing process">
-          <svg class="process-svg" viewBox="0 0 920 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1. Write or Ask, 2. Smart Router checks Private, Offline and length, 3. Gemini Nano processes locally or masked Cloud Flash-Lite, 4. Saved locally on your device">
-            <rect x="6" y="14" width="194" height="100" rx="16" fill="#140a0a" stroke="rgba(246,239,230,0.16)" stroke-width="1.5"/>
-            <text x="24" y="42" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">01 · INPUT</text>
-            <text x="24" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Write or Ask</text>
-            <text x="24" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Notes, code, or questions</text>
-
-            <path d="M206 64H236" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round"/>
-            <path d="M230 58L237 64L230 70" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-            <rect x="242" y="14" width="204" height="100" rx="16" fill="#140a0a" stroke="rgba(255,46,59,0.45)" stroke-width="1.5"/>
-            <text x="260" y="42" fill="#ff2e3b" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">02 · SMART ROUTER</text>
-            <text x="260" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Check Rules</text>
-            <text x="260" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Private · Offline · Length</text>
-
-            <path d="M452 64H482" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round"/>
-            <path d="M476 58L483 64L476 70" stroke="#ff2e3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-            <rect x="488" y="14" width="210" height="100" rx="16" fill="#140a0a" stroke="rgba(255,46,59,0.45)" stroke-width="1.5"/>
-            <text x="506" y="42" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">03 · INFERENCE</text>
-            <text x="506" y="68" fill="#f6efe6" font-family="Manrope, sans-serif" font-size="16" font-weight="700">Nano or Cloud</text>
-            <text x="506" y="90" fill="#b8aba4" font-family="Inter, sans-serif" font-size="12">Local prompt or masked cloud</text>
-
-            <path d="M704 64H734" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-            <path d="M728 58L735 64L728 70" stroke="#f6efe6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.7"/>
-
-            <rect x="740" y="14" width="174" height="100" rx="16" fill="#f6efe6"/>
-            <text x="758" y="42" fill="#b91c1c" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">04 · STORAGE</text>
-            <text x="758" y="68" fill="#120909" font-family="Manrope, sans-serif" font-size="16" font-weight="800">On Your Device</text>
-            <text x="758" y="90" fill="#4a3b3b" font-family="Inter, sans-serif" font-size="12">Saved in localStorage</text>
-          </svg>
-        </div>
-      </section>
-
-      <section class="compare-strip glass-panel reveal-drop" aria-label="How HybridNotes compares">
-        <div class="compare-item">
-          <span class="compare-label">Cloud AI study tools</span>
-          <p>Cloud features need an internet connection. Each provider handles data and reports usage differently.</p>
-        </div>
-        <div class="compare-divider" aria-hidden="true"></div>
-        <div class="compare-item compare-item-accent">
-          <span class="compare-label hl-red-bright">HybridNotes</span>
-          <p>When Gemini Nano is available, supported tasks can run on your device. HybridNotes shows when a task uses cloud AI.</p>
-        </div>
-      </section>
-
-      <section class="carousel-section glass-panel reveal-drop" aria-label="Features showcase">
-        <div class="carousel-viewport">
-          <div id="carousel-track" class="carousel-track">
-            <article class="carousel-slide">
-              <div class="slide-quote">
-                <span class="badge badge-on-device">Quiz Me (Flashcards)</span>
-                <p>Turn class notes into a few quick questions. Supported prompts can stay on your device.</p>
-              </div>
-              <div class="slide-stat">
-                <strong class="mono hl-emphasis">Local AI</strong>
-                <span>prompt stays on-device with Nano</span>
-              </div>
-            </article>
-            <article class="carousel-slide">
-              <div class="slide-quote">
-                <span class="badge badge-on-device">Study Loop</span>
-                <p>Miss one? Review it tomorrow. Remember it? Your next reviews spread out.</p>
-              </div>
-              <div class="slide-stat">
-                <strong class="mono hl-emphasis">1 · 3 · 7 · 14</strong>
-                <span>day review intervals, stored locally</span>
-              </div>
-            </article>
-            <article class="carousel-slide">
-              <div class="slide-quote">
-                <span class="badge badge-cloud">Identifier Redaction</span>
-                <p>Common identifiers are hidden on your device before cloud AI gets the prompt.</p>
-              </div>
-              <div class="slide-stat">
-                <strong class="mono hl-red-bright">Masked</strong>
-                <span>identifiers before cloud calls</span>
-              </div>
-            </article>
-            <article class="carousel-slide">
-              <div class="slide-quote">
-                <span class="badge badge-on-device">Installable PWA</span>
-                <p>Install HybridNotes and keep your notes close, even when your connection drops.</p>
-              </div>
-              <div class="slide-stat">
-                <strong class="mono hl-emphasis">Offline</strong>
-                <span>app shell &amp; localStorage notes</span>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <div class="carousel-bar">
-          <div class="carousel-nav">
-            <button id="carousel-prev" type="button" class="pill-btn btn-ghost" aria-label="Previous feature">‹</button>
-            <div id="carousel-dots" class="carousel-dots" role="tablist" aria-label="Feature slides"></div>
-            <button id="carousel-next" type="button" class="pill-btn btn-ghost" aria-label="Next feature">›</button>
-          </div>
-          <button id="carousel-toggle" type="button" class="pill-btn btn-ghost" aria-label="Pause carousel">
-            Pause
-          </button>
-        </div>
-      </section>
-
-      <footer class="landing-footer reveal-drop">
-        <div class="footer-brand">
-          <img src="/icon.svg" alt="" width="18" height="18" />
-          <span class="footer-tagline">Learn better. Remember more.</span>
-          <span class="footer-meta">HybridNotes · Apache-2.0 open-source study notes</span>
-        </div>
-        <button id="footer-launch-btn" type="button" class="pill-btn btn-ghost">
-          Open Workspace →
-        </button>
+      <footer class="hn-footer">
+        <span>HybridNotes · Apache-2.0 open-source study notes</span>
+        <span class="hn-footer-links">
+          <button type="button" id="priv-footer-home-btn" class="hn-footer-link-btn">Home</button>
+          <a href="https://github.com/SameedIrfan7/HybridNotes" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </span>
       </footer>
     </section>
 
@@ -500,17 +563,21 @@
     <div id="workspace-view" class="app-shell" hidden>
       <aside id="sidebar" class="sidebar glass-panel" aria-label="Study chats and device menu">
         <div class="sidebar-header">
-          <div class="sidebar-brand">
+          <button id="sidebar-home-btn" type="button" class="sidebar-brand" aria-label="Return to home">
             <img src="/icon.svg" alt="" width="20" height="20" />
             <span class="sidebar-brand-name">HybridNotes</span>
-          </div>
+          </button>
           <button
             id="close-drawer-btn"
             type="button"
-            class="topbar-icon-btn mobile-only-btn"
-            aria-label="Close menu"
+            class="topbar-icon-btn sidebar-toggle-btn"
+            aria-label="Collapse sidebar"
+            aria-expanded="true"
           >
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="sidebar-menu-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 6h14M3 10h14M3 14h14" stroke-linecap="round" />
+            </svg>
+            <svg class="sidebar-close-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
             </svg>
           </button>
@@ -519,7 +586,7 @@
         <nav class="sidebar-nav-list" aria-label="Quick actions">
           <button id="new-note-btn" type="button" class="sidebar-nav-row">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path d="M13.5 3.5l3 3L6.5 16.5H3.5v-3L13.5 3.5z" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M10 3v14M3 10h14" stroke-linecap="round" />
             </svg>
             <span>New chat</span>
           </button>
@@ -531,24 +598,7 @@
             <span>Study Loop</span>
             <span id="study-loop-count" class="study-loop-count">Start</span>
           </button>
-          <button id="sidebar-stats-btn" type="button" class="sidebar-nav-row">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path d="M4 15V9M10 15V5M16 15v-4" stroke-linecap="round" />
-            </svg>
-            <span>Routing &amp; Telemetry</span>
-          </button>
         </nav>
-
-        <section class="sidebar-section mobile-only-block" aria-label="Device and network status">
-          <div class="sidebar-section-label">Device &amp; Network</div>
-          <button id="mobile-nano-status-pill" type="button" class="nano-status glass-pill" aria-live="polite">
-            Checking Nano…
-          </button>
-          <label class="sidebar-switch-row" for="mobile-sim-offline-toggle">
-            <span>Simulate Offline</span>
-            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" />
-          </label>
-        </section>
 
         <div class="sidebar-chats-group">
           <div class="sidebar-section-label">Chats</div>
@@ -571,39 +621,40 @@
 
         <section
           id="stats-card"
-          class="stats-card glass-subpanel desktop-only-block"
-          role="button"
-          tabindex="0"
-          aria-label="Open Routing Stats breakdown"
+          class="stats-card glass-subpanel"
         >
           <div class="stats-header">
-            <h2 class="stats-title">Routing Stats <span class="stats-hint">Details ↗</span></h2>
-            <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset</button>
+            <h2 class="stats-title">Routing Stats</h2>
+            <button id="sidebar-stats-btn" type="button" class="stats-hint">Details ↗</button>
           </div>
-          <p id="stats-summary" class="stats-summary">
+          <p id="stats-summary" class="stats-summary sr-only">
             0% on-device · 0 cloud calls avoided · ~0.0 KB text
           </p>
-          <div class="stat-row">
-            <div class="stat-label">
-              <span>On-device</span>
-              <span id="stat-ondevice-meta" class="mono">0 · —</span>
-            </div>
-            <div class="stat-track">
-              <div id="stat-ondevice-bar" class="stat-fill stat-fill-green" style="width: 0%"></div>
-            </div>
+          <div class="sidebar-stats-highlight">
+            <strong id="sidebar-ondevice-pct">0%</strong>
+            <span>on-device</span>
           </div>
-          <div class="stat-row">
-            <div class="stat-label">
-              <span>Cloud</span>
-              <span id="stat-cloud-meta" class="mono">0 · —</span>
-            </div>
-            <div class="stat-track">
-              <div id="stat-cloud-bar" class="stat-fill stat-fill-blue" style="width: 0%"></div>
-            </div>
+          <div class="stat-track sidebar-stats-track" aria-hidden="true">
+            <div id="stat-ondevice-bar" class="stat-fill stat-fill-green" style="width: 0%"></div>
+            <div id="stat-cloud-bar" class="stat-fill stat-fill-blue" style="width: 0%"></div>
+          </div>
+          <div class="sidebar-stats-counts" aria-label="Routing counts">
+            <span id="stat-ondevice-meta" class="mono">0 local</span>
+            <span id="stat-cloud-meta" class="mono">0 cloud</span>
           </div>
         </section>
 
-        <div class="sidebar-profile-footer mobile-only-block">
+        <section class="sidebar-section sidebar-device-section" aria-label="Device and network status">
+          <button id="mobile-nano-status-pill" type="button" class="nano-status glass-pill mobile-only-block" aria-live="polite">
+            Checking Nano…
+          </button>
+          <label class="sidebar-switch-row" for="mobile-sim-offline-toggle">
+            <span><i class="sidebar-offline-indicator" aria-hidden="true"></i>Offline mode</span>
+            <input id="mobile-sim-offline-toggle" class="switch-input" type="checkbox" aria-label="Simulate offline mode for routing" />
+          </label>
+        </section>
+
+        <div class="sidebar-profile-footer">
           <button id="sidebar-profile-btn" type="button" class="sidebar-profile-action" aria-label="Open local profile and settings">
             <span class="profile-avatar-btn sidebar-avatar" id="sidebar-avatar-initials">S</span>
             <span class="sidebar-profile-meta">
@@ -625,6 +676,17 @@
 
       <main class="workspace">
         <header class="editor-topbar">
+          <button
+            id="mobile-menu-btn"
+            type="button"
+            class="pill-btn mobile-only-btn editor-drawer-toggle"
+            aria-label="Open notes drawer"
+            aria-expanded="false"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 6h14M3 10h14M3 14h14" stroke-linecap="round" />
+            </svg>
+          </button>
           <div class="title-wrap">
             <label for="note-title" class="sr-only">Chat title</label>
             <input
@@ -688,37 +750,37 @@
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M10 2.5l1.6 4.4L16 8.5l-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6L10 2.5z" stroke-linejoin="round" />
               </svg>
-              <span>Auto (Smart)</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Auto (Smart)</span>
             </button>
             <button type="button" class="action-btn popover-item" data-task="summarize" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M4 6h12M4 10h9M4 14h6" stroke-linecap="round" />
               </svg>
-              <span>Summarize</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Summarize</span>
             </button>
             <button type="button" class="action-btn popover-item" data-task="quiz" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M7.5 7.5a2.5 2.5 0 114.2 1.8c-.9.7-1.7 1.2-1.7 2.4M10 15h.01" stroke-linecap="round" />
               </svg>
-              <span>Quiz Me (Flashcards)</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Quiz Me (Flashcards)</span>
             </button>
             <button type="button" class="action-btn popover-item" data-task="grammar" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M4 14l3.5-8 3.5 8M5.2 11.5h4.6M13 13l2 2 3-4" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span>Fix grammar</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Fix grammar</span>
             </button>
             <button type="button" class="action-btn popover-item" data-task="title" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M5 5h10M10 5v10" stroke-linecap="round" />
               </svg>
-              <span>Suggest title</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Suggest title</span>
             </button>
             <button type="button" class="action-btn popover-item" data-task="todos" role="menuitemradio" aria-checked="false">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M4 6l1.5 1.5L8 5M10 6h6M4 12l1.5 1.5L8 11M10 12h6" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span>Extract to-dos</span>
+              <i class="hn-menu-dot blue" aria-hidden="true"></i><span>Extract to-dos</span>
             </button>
 
             <div class="popover-section-label">Cloud (Identifiers Masked)</div>
@@ -727,7 +789,7 @@
                 <circle cx="9" cy="9" r="5" />
                 <path d="M13 13l3.5 3.5" stroke-linecap="round" />
               </svg>
-              <span>Deep Analyze</span>
+              <i class="hn-menu-dot coral" aria-hidden="true"></i><span>Deep Analyze</span>
             </button>
             <div class="popover-translate-row">
               <button type="button" class="action-btn action-cloud popover-item" data-task="translate" role="menuitemradio" aria-checked="false">
@@ -735,7 +797,7 @@
                   <circle cx="10" cy="10" r="7" />
                   <path d="M3 10h14M10 3a11 11 0 010 14M10 3a11 11 0 000 14" />
                 </svg>
-                <span>Translate</span>
+                <i class="hn-menu-dot coral" aria-hidden="true"></i><span>Translate</span>
               </button>
               <label for="translate-lang" class="sr-only">Target language</label>
               <select id="translate-lang" class="lang-select" aria-label="Target language">
@@ -766,14 +828,16 @@
                 <button
                   id="task-menu-btn"
                   type="button"
-                  class="pill-btn task-menu-btn"
+                  class="pill-btn task-menu-btn hn-picker-pill"
                   aria-haspopup="menu"
                   aria-expanded="false"
+                  aria-label="Choose task"
                 >
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M10 4v12M4 10h12" stroke-linecap="round" />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FF5A4F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" />
                   </svg>
-                  <span id="selected-task-chip">Auto</span>
+                  <span class="hn-picker-kicker">Task</span>
+                  <b id="selected-task-chip">Auto</b>
                 </button>
                 <input id="attach-file-input" type="file" accept="image/*,.txt,.md,text/plain,text/markdown" hidden />
                 <button
@@ -786,7 +850,7 @@
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <path d="M13.5 6.5l-6.2 6.2a2.2 2.2 0 003.1 3.1l6.4-6.4a3.6 3.6 0 00-5.1-5.1L5 11a5 5 0 007.1 7.1l5.4-5.4" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
-                  <span>Drop / Attach</span>
+                  <span>Attach</span>
                 </button>
                 <span id="char-count" class="mono">0 chars</span>
               </div>
@@ -794,12 +858,15 @@
                 <div id="model-popover" class="task-popover model-popover glass-panel" role="menu" aria-label="Select AI model" hidden>
                   <div class="popover-section-label">Model Routing</div>
                   <button type="button" class="model-opt popover-item active" data-model="auto" role="menuitemradio" aria-checked="true">
+                    <i class="hn-menu-dot blue" aria-hidden="true"></i>
                     <span>Auto · Smart Route</span>
                   </button>
                   <button type="button" class="model-opt popover-item" data-model="nano" role="menuitemradio" aria-checked="false">
+                    <i class="hn-menu-dot blue" aria-hidden="true"></i>
                     <span>Gemini Nano (On-device)</span>
                   </button>
                   <button type="button" class="model-opt popover-item" data-model="flash-lite" role="menuitemradio" aria-checked="false">
+                    <i class="hn-menu-dot coral" aria-hidden="true"></i>
                     <span>Gemini 3.5 Flash-Lite</span>
                   </button>
                   <label class="popover-private-row" for="private-toggle">
@@ -810,12 +877,17 @@
                 <button
                   id="model-menu-btn"
                   type="button"
-                  class="pill-btn model-menu-btn"
+                  class="pill-btn model-menu-btn hn-picker-pill"
                   aria-haspopup="menu"
                   aria-expanded="false"
                   title="Choose model"
                 >
-                  <span id="selected-model-chip">Auto</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#7AB6FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                    <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" />
+                  </svg>
+                  <span class="hn-picker-kicker">Model</span>
+                  <b id="selected-model-chip">Auto</b>
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M6 12l4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -849,94 +921,209 @@
           </section>
         </div>
       </main>
+
+      <section id="settings-view" class="settings-view" hidden aria-labelledby="settings-title">
+        <header class="settings-page-header">
+          <div class="settings-page-heading">
+            <button
+              id="settings-menu-btn"
+              type="button"
+              class="pill-btn mobile-only-btn editor-drawer-toggle"
+              aria-label="Open workspace menu"
+              aria-expanded="false"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M3 6h14M3 10h14M3 14h14" stroke-linecap="round" />
+              </svg>
+            </button>
+            <button id="settings-back-btn" type="button" class="settings-back-btn" aria-label="Back to workspace">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M12.5 4.5 7 10l5.5 5.5M7.5 10H17" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Workspace</span>
+            </button>
+            <div class="profile-avatar-lg" id="settings-avatar-initials">S</div>
+            <div>
+              <p class="settings-eyebrow">Workspace preferences</p>
+              <h1 id="settings-title">Settings</h1>
+              <p class="settings-page-subtitle">Your profile and study data stay on this device.</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="settings-layout">
+          <nav class="settings-nav" role="tablist" aria-label="Workspace settings" aria-orientation="vertical">
+            <p class="settings-nav-label">Settings</p>
+            <button id="settings-tab-profile" class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settings-panel-profile" data-settings-tab="profile">Profile</button>
+            <button id="settings-tab-usage" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-usage" data-settings-tab="usage">Usage</button>
+            <button id="settings-tab-storage" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-storage" data-settings-tab="storage">Storage</button>
+            <button id="settings-tab-data" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-data" data-settings-tab="data">Data</button>
+          </nav>
+
+          <div class="settings-content">
+            <section id="settings-panel-profile" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-profile" tabindex="0">
+              <div class="settings-panel-heading">
+                <h2>Profile</h2>
+                <p>Personalize your workspace and choose how new chats are handled.</p>
+              </div>
+              <div class="profile-section glass-subpanel">
+                <div class="profile-fields">
+                  <label class="profile-field">
+                    <span>Display name</span>
+                    <input id="profile-name-input" type="text" class="profile-input" placeholder="Student" maxlength="32" />
+                  </label>
+                  <label class="profile-field">
+                    <span>Course / focus</span>
+                    <input id="profile-focus-input" type="text" class="profile-input" placeholder="e.g. Biology, CS, Exam Prep" maxlength="48" />
+                  </label>
+                </div>
+                <label class="profile-toggle-row" for="profile-default-private">
+                  <span>
+                    <strong>Private by default</strong>
+                    <small>Start new chats in on-device-only mode.</small>
+                  </span>
+                  <input id="profile-default-private" class="switch-input" type="checkbox" />
+                </label>
+              </div>
+            </section>
+
+            <section id="settings-panel-usage" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-usage" tabindex="0" hidden>
+              <div class="settings-panel-heading">
+                <h2>Usage</h2>
+                <p>Review how study tasks have been routed between this device and cloud models.</p>
+              </div>
+              <div class="usage-details">
+                <div class="usage-details-header">
+                  <h3>Routing &amp; telemetry</h3>
+                  <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset stats</button>
+                </div>
+                <p class="usage-details-subtitle">Live inference metrics and smart router policy.</p>
+                <div class="modal-kpi-grid">
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label">On-device share</span>
+                    <strong id="modal-ondevice-pct" class="kpi-value mono">0%</strong>
+                  </div>
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label">Cloud calls avoided</span>
+                    <strong id="modal-avoided" class="kpi-value mono">0</strong>
+                  </div>
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label">Estimated text processed locally*</span>
+                    <strong id="modal-kb-saved" class="kpi-value mono">~0.0 KB</strong>
+                  </div>
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label">Remote threshold</span>
+                    <strong id="modal-threshold" class="kpi-value mono">1500 chars</strong>
+                  </div>
+                </div>
+                <p class="modal-subtitle metric-disclaimer">
+                  Approximate UTF-8 size of note and response text for on-device runs; this does not measure total network traffic or model-download data.
+                </p>
+
+                <div class="modal-latency-grid">
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> On-device (Gemini Nano)</span>
+                    <strong id="modal-ondevice-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
+                  </div>
+                  <div class="modal-kpi glass-subpanel">
+                    <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 18.2L7.3 3.6c.1-.6.9-.7 1.2-.2l2.9 5.4 3.4-6.4c.3-.5 1.1-.4 1.2.2l3.5 15.6-7.5 4.2-7.5-4.2z"/></svg> Cloud (Gemini Flash-Lite)</span>
+                    <strong id="modal-cloud-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
+                  </div>
+                </div>
+
+                <div class="hybrid-compare-bar">
+                  <button id="toggle-hybrid-compare-btn" type="button" class="pill-btn btn-ghost" aria-expanded="false">
+                    Why Hybrid? Live Comparison
+                  </button>
+                  <span id="modal-masked-total" class="mono hybrid-masked-stat">0 PII identifiers masked locally</span>
+                </div>
+
+                <div id="hybrid-compare-view" class="hybrid-compare-grid" hidden>
+                  <div class="hybrid-compare-card glass-subpanel">
+                    <div class="hybrid-compare-head">
+                      <span class="badge badge-on-device">On-device · Gemini Nano</span>
+                      <strong class="mono">$0.00 / call</strong>
+                    </div>
+                    <ul>
+                      <li><strong>0 KB uploaded:</strong> Note stays inside Chrome.</li>
+                      <li><strong>Works offline:</strong> Zero internet required once downloaded.</li>
+                      <li><strong>Your stats:</strong> <span id="compare-ondevice-stats" class="mono">0 runs</span></li>
+                    </ul>
+                  </div>
+                  <div class="hybrid-compare-card glass-subpanel">
+                    <div class="hybrid-compare-head">
+                      <span class="badge badge-cloud">Cloud · Flash-Lite</span>
+                      <strong class="mono">PII Masked</strong>
+                    </div>
+                    <ul>
+                      <li><strong>Redacted locally:</strong> Emails, phones &amp; 6+ digit IDs scrubbed first.</li>
+                      <li><strong>Multimodal &amp; universal:</strong> Handles photos &amp; mobile devices.</li>
+                      <li><strong>Your stats:</strong> <span id="compare-cloud-stats" class="mono">0 runs</span></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="modal-rules">
+                  <h3>How HybridNotes routes each request</h3>
+                  <ul>
+                    <li><strong>Private or Offline → On-device only:</strong> Locks inference to Chrome's Gemini Nano so nothing leaves your device. Cloud-only tasks are refused.</li>
+                    <li><strong>Long Private/Offline Notes → Map-Reduce:</strong> Notes above the threshold are split into 1,200-char chunks, processed locally, and merged.</li>
+                    <li><strong>Deep Analyze / Translate → Cloud + Identifier Masking:</strong> Sensitive identifiers (emails, phone numbers, IDs) are masked locally before any cloud call.</li>
+                    <li><strong>Short Simple Tasks (&lt; threshold) → Prefer On-device:</strong> Summarize, Quiz Me, Grammar, Title, and To-dos run locally first and fall back to cloud if needed.</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="settings-panel-storage" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-storage" tabindex="0" hidden>
+              <div class="settings-panel-heading">
+                <h2>Storage</h2>
+                <p>See how much browser storage your local notes currently use.</p>
+              </div>
+              <div class="profile-section glass-subpanel">
+                <h3 class="settings-card-title">This device</h3>
+                <div class="profile-quota-row">
+                  <span id="profile-quota-summary" class="mono">0.0 KB / 5,120 KB localStorage</span>
+                  <span id="profile-chats-count" class="mono">0 chats · 0 messages</span>
+                </div>
+                <div class="stat-track">
+                  <div id="profile-quota-bar" class="stat-fill stat-fill-green" style="width: 1%"></div>
+                </div>
+                <p class="profile-data-note">
+                  Your notes and profile are stored in this browser's localStorage. They are not encrypted; clearing browser data removes local backups.
+                </p>
+              </div>
+            </section>
+
+            <section id="settings-panel-data" class="settings-panel" role="tabpanel" aria-labelledby="settings-tab-data" tabindex="0" hidden>
+              <div class="settings-panel-heading">
+                <h2>Data</h2>
+                <p>Back up, restore, or remove the notes saved in this browser.</p>
+              </div>
+              <div class="settings-data-actions">
+                <div class="profile-section glass-subpanel">
+                  <h3 class="settings-card-title">Backups</h3>
+                  <p class="profile-data-note">Export your notes to a file or import a previous HybridNotes backup.</p>
+                  <div class="settings-action-row">
+                    <button id="profile-export-btn" type="button" class="pill-btn">Save my notes</button>
+                    <button id="profile-import-btn" type="button" class="pill-btn">Open saved notes</button>
+                    <input id="profile-import-input" type="file" accept=".json,application/json" hidden />
+                  </div>
+                </div>
+                <div class="profile-section glass-subpanel">
+                  <h3 class="settings-card-title">Other actions</h3>
+                  <p class="profile-data-note">Replay the introduction or permanently clear local chats, usage stats, and profile settings.</p>
+                  <div class="settings-action-row">
+                    <button id="profile-tour-btn" type="button" class="pill-btn">Replay quick demo</button>
+                    <button id="profile-clear-btn" type="button" class="pill-btn btn-danger">Clear local data</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <dialog id="stats-modal" class="stats-modal glass-panel" aria-labelledby="stats-modal-title">
-      <div class="modal-header">
-        <div>
-          <h2 id="stats-modal-title" class="modal-title">Routing &amp; Telemetry Breakdown</h2>
-          <p class="modal-subtitle">Live inference metrics and smart router policy</p>
-        </div>
-        <button id="close-stats-modal" type="button" class="btn-ghost pill-btn" aria-label="Close">
-          Close
-        </button>
-      </div>
-
-      <div class="modal-kpi-grid">
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">On-Device Share</span>
-          <strong id="modal-ondevice-pct" class="kpi-value mono">0%</strong>
-        </div>
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">Cloud Calls Avoided</span>
-          <strong id="modal-avoided" class="kpi-value mono">0</strong>
-        </div>
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">Estimated Text Processed Locally*</span>
-          <strong id="modal-kb-saved" class="kpi-value mono">~0.0 KB</strong>
-        </div>
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label">Remote Threshold</span>
-          <strong id="modal-threshold" class="kpi-value mono">1500 chars</strong>
-        </div>
-      </div>
-      <p class="modal-subtitle metric-disclaimer">
-        Approximate UTF-8 size of the note and response text for on-device runs; this does not measure total network traffic or model-download data.
-      </p>
-
-      <div class="modal-latency-grid">
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.4 5.2 4.8 9.6 10 10-5.2.4-9.6 4.8-10 10-.4-5.2-4.8-9.6-10-10 5.2-.4 9.6-4.8 10-10z"/></svg> On-Device (Gemini Nano)</span>
-          <strong id="modal-ondevice-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
-        </div>
-        <div class="modal-kpi glass-subpanel">
-          <span class="kpi-label kpi-with-logo"><svg class="inline-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 18.2L7.3 3.6c.1-.6.9-.7 1.2-.2l2.9 5.4 3.4-6.4c.3-.5 1.1-.4 1.2.2l3.5 15.6-7.5 4.2-7.5-4.2z"/></svg> Cloud (Gemini Flash-Lite)</span>
-          <strong id="modal-cloud-detail" class="kpi-sub mono">0 runs · — ms avg</strong>
-        </div>
-      </div>
-
-      <div class="hybrid-compare-bar">
-        <button id="toggle-hybrid-compare-btn" type="button" class="pill-btn btn-ghost" aria-expanded="false">
-          Why Hybrid? Live Comparison
-        </button>
-        <span id="modal-masked-total" class="mono hybrid-masked-stat">0 PII identifiers masked locally</span>
-      </div>
-
-      <div id="hybrid-compare-view" class="hybrid-compare-grid" hidden>
-        <div class="hybrid-compare-card glass-subpanel">
-          <div class="hybrid-compare-head">
-            <span class="badge badge-on-device">On-Device · Gemini Nano</span>
-            <strong class="mono">$0.00 / call</strong>
-          </div>
-          <ul>
-            <li><strong>0 KB uploaded:</strong> Note stays inside Chrome.</li>
-            <li><strong>Works offline:</strong> Zero internet required once downloaded.</li>
-            <li><strong>Your stats:</strong> <span id="compare-ondevice-stats" class="mono">0 runs</span></li>
-          </ul>
-        </div>
-        <div class="hybrid-compare-card glass-subpanel">
-          <div class="hybrid-compare-head">
-            <span class="badge badge-cloud">Cloud · Flash-Lite</span>
-            <strong class="mono">PII Masked</strong>
-          </div>
-          <ul>
-            <li><strong>Redacted locally:</strong> Emails, phones &amp; 6+ digit IDs scrubbed first.</li>
-            <li><strong>Multimodal &amp; universal:</strong> Handles photos &amp; mobile devices.</li>
-            <li><strong>Your stats:</strong> <span id="compare-cloud-stats" class="mono">0 runs</span></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="modal-rules">
-        <h3>How HybridNotes Routes Each Request</h3>
-        <ul>
-          <li><strong>Private or Offline → On-Device Only:</strong> Locks inference to Chrome's Gemini Nano so nothing leaves your device. Cloud-only tasks are refused.</li>
-          <li><strong>Long Private/Offline Notes → Map-Reduce:</strong> Notes above the threshold are split into 1,200-char chunks, processed locally, and merged.</li>
-          <li><strong>Deep Analyze / Translate → Cloud + Identifier Masking:</strong> Sensitive identifiers (emails, phone numbers, IDs) are masked locally before any cloud call.</li>
-          <li><strong>Short Simple Tasks (&lt; threshold) → Prefer On-Device:</strong> Summarize, Quiz Me, Grammar, Title, and To-dos run locally first and fall back to cloud if needed.</li>
-        </ul>
-      </div>
-    </dialog>
 
     <dialog id="study-loop-modal" class="demo-modal glass-panel study-loop-modal" aria-labelledby="study-loop-title">
       <div class="demo-header">
@@ -1014,69 +1201,6 @@
           <button id="demo-prev-btn" type="button" class="pill-btn btn-ghost" hidden>Back</button>
           <button id="demo-next-btn" type="button" class="btn-primary pill-btn">Next →</button>
         </div>
-      </div>
-    </dialog>
-
-    <dialog id="profile-modal" class="demo-modal profile-modal glass-panel" aria-labelledby="profile-modal-title">
-      <div class="modal-header">
-        <div class="profile-header-id">
-          <div class="profile-avatar-lg" id="profile-modal-initials">S</div>
-          <div>
-            <h2 id="profile-modal-title" class="modal-title">Local Profile &amp; Settings</h2>
-            <p class="modal-subtitle">Stored only on this device — never uploaded to any server.</p>
-          </div>
-        </div>
-        <button id="close-profile-modal" type="button" class="btn-ghost pill-btn" aria-label="Close">
-          Close
-        </button>
-      </div>
-
-      <div class="profile-section glass-subpanel">
-        <div class="profile-section-title">Your Profile</div>
-        <div class="profile-fields">
-          <label class="profile-field">
-            <span>Display Name</span>
-            <input id="profile-name-input" type="text" class="profile-input" placeholder="Student" maxlength="32" />
-          </label>
-          <label class="profile-field">
-            <span>Course / Focus (optional)</span>
-            <input id="profile-focus-input" type="text" class="profile-input" placeholder="e.g. Biology, CS, Exam Prep" maxlength="48" />
-          </label>
-        </div>
-        <label class="profile-toggle-row" for="profile-default-private">
-          <span>Start new chats in Private (on-device only) mode</span>
-          <input id="profile-default-private" class="switch-input" type="checkbox" />
-        </label>
-      </div>
-
-      <div class="profile-section glass-subpanel">
-        <div class="profile-section-title">Device Storage &amp; Data Quota</div>
-        <p class="profile-data-note">
-          Notes and profile values are stored unencrypted in this browser's localStorage.
-          Private mode controls AI routing; clearing browser data removes local backups.
-        </p>
-        <div class="profile-quota-row">
-          <span id="profile-quota-summary" class="mono">0.0 KB / 5,120 KB localStorage</span>
-          <span id="profile-chats-count" class="mono">0 chats · 0 messages</span>
-        </div>
-        <div class="stat-track">
-          <div id="profile-quota-bar" class="stat-fill stat-fill-green" style="width: 1%"></div>
-        </div>
-        <p id="profile-savings-line" class="profile-savings-line">
-          0% on-device · 0 cloud calls avoided · ~0.0 KB text processed locally
-        </p>
-        <p class="profile-data-note">
-          Estimated from note and response text size for on-device runs; it is not a measurement of total network traffic.
-        </p>
-      </div>
-
-      <div class="profile-actions-grid">
-        <button id="profile-export-btn" type="button" class="pill-btn">Save My Notes</button>
-        <button id="profile-import-btn" type="button" class="pill-btn">Open Saved Notes</button>
-        <input id="profile-import-input" type="file" accept=".json,application/json" hidden />
-        <button id="profile-tour-btn" type="button" class="pill-btn">Replay Quick Demo</button>
-        <button id="profile-stats-btn" type="button" class="pill-btn">Routing &amp; Telemetry</button>
-        <button id="profile-clear-btn" type="button" class="pill-btn btn-danger profile-clear-wide">Clear Local Data</button>
       </div>
     </dialog>
 
