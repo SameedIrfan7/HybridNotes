@@ -19,7 +19,8 @@
     <div class="bg-backdrop" aria-hidden="true"></div>
 
     <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
-      Offline mode — AI requests are locked to on-device inference.
+      <span>Offline mode — AI requests are locked to on-device inference.</span>
+      <button id="offline-readiness-open" type="button" class="pill-btn btn-ghost">Offline readiness</button>
     </div>
 
     <nav class="top-nav glass-panel" aria-label="Primary navigation">
@@ -981,6 +982,13 @@
                   </span>
                   <input id="profile-default-private" class="switch-input" type="checkbox" />
                 </label>
+                <label class="profile-toggle-row" for="profile-routing-telemetry">
+                  <span>
+                    <strong>Routing telemetry</strong>
+                    <small>Save local routing statistics in this browser.</small>
+                  </span>
+                  <input id="profile-routing-telemetry" class="switch-input" type="checkbox" />
+                </label>
               </div>
               <div class="profile-section profile-ai-status glass-subpanel">
                 <div>
@@ -1001,7 +1009,7 @@
               <div class="usage-details">
                 <div class="usage-details-header">
                   <h3>Routing &amp; telemetry</h3>
-                  <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Reset stats</button>
+                  <button id="reset-stats-btn" type="button" class="btn-ghost pill-btn">Clear stats</button>
                 </div>
                 <p class="usage-details-subtitle">Live inference metrics and smart router policy. Cloud calls avoided is estimated from on-device runs.</p>
                 <div class="modal-kpi-grid">
@@ -1112,6 +1120,9 @@
                   <p class="profile-data-note">Export your notes to a file or import a previous HybridNotes backup.</p>
                   <div class="settings-action-row">
                     <button id="profile-export-btn" type="button" class="pill-btn">Save my notes</button>
+                    <button id="profile-export-txt-btn" type="button" class="pill-btn btn-ghost">Export .txt</button>
+                    <button id="profile-export-md-btn" type="button" class="pill-btn btn-ghost">Export .md</button>
+                    <button id="profile-export-pdf-btn" type="button" class="pill-btn btn-ghost">Print / PDF</button>
                     <button id="profile-import-btn" type="button" class="pill-btn">Open saved notes</button>
                     <input id="profile-import-input" type="file" accept=".json,application/json" hidden />
                   </div>
@@ -1269,6 +1280,41 @@
       </div>
     </dialog>
 
+    <article id="hn-print-area" class="hn-print-area" hidden></article>
+    <dialog id="ocr-preview-modal" class="demo-modal glass-panel" aria-labelledby="ocr-preview-title">
+      <div class="demo-header">
+        <span class="badge badge-on-device">Local OCR</span>
+        <button id="ocr-preview-close" type="button" class="pill-btn btn-ghost">Cancel</button>
+      </div>
+      <h2 id="ocr-preview-title" class="demo-title">Review extracted text</h2>
+      <p class="demo-desc">OCR is local and best for printed text. Handwriting may be inaccurate. Confirm before inserting it into your note.</p>
+      <label for="ocr-language">Language</label>
+      <select id="ocr-language" class="profile-input">
+        <option value="eng">English</option>
+      </select>
+      <textarea id="ocr-preview-text" class="profile-input" rows="10" placeholder="Extracted text will appear here…"></textarea>
+      <progress id="ocr-progress" max="100" value="0" hidden></progress>
+      <div class="demo-footer">
+        <button id="ocr-preview-confirm" type="button" class="btn-primary pill-btn" disabled>Insert text</button>
+      </div>
+    </dialog>
+    <dialog id="offline-readiness-modal" class="demo-modal glass-panel" aria-labelledby="offline-readiness-title">
+      <div class="demo-header">
+        <span class="badge badge-on-device">Offline setup</span>
+        <button id="offline-readiness-close" type="button" class="pill-btn btn-ghost">Close</button>
+      </div>
+      <h2 id="offline-readiness-title" class="demo-title">Offline readiness</h2>
+      <p id="offline-readiness-summary" class="demo-desc"></p>
+      <div class="profile-section glass-subpanel">
+        <h3 class="settings-card-title">Storage</h3>
+        <p id="offline-storage-summary" class="profile-data-note">Checking browser storage…</p>
+      </div>
+      <div id="offline-component-list" class="modal-kpi-grid">
+        <div class="modal-kpi glass-subpanel"><span class="kpi-label">Gemini Nano</span><strong id="offline-nano-status" class="kpi-sub mono">Checking…</strong></div>
+        <div class="modal-kpi glass-subpanel"><span class="kpi-label">OCR data</span><strong id="offline-ocr-status" class="kpi-sub mono">Missing</strong></div>
+      </div>
+      <p class="demo-desc"><strong>Works offline:</strong> app shell, local notes, Study Loop, exports, and supported on-device AI.<br><strong>Needs internet:</strong> first downloads and cloud-only tasks.</p>
+    </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

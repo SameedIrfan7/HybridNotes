@@ -2,6 +2,8 @@
 
 A **private-by-default, installable PWA** for AI study notes that routes prompts between **Chrome Built-in AI (Gemini Nano)** and **Gemini 3.5 Flash-Lite** through **Firebase AI Logic**. HybridNotes explains each routing decision, masks common sensitive identifiers before supported cloud requests, and stores chats, profile settings, and routing telemetry locally in `localStorage`.
 
+**Works fully offline after a one-time setup on supported desktop browsers.** This does not mean HybridNotes is completely independent of the internet: first-time model downloads, updates, and cloud-only tasks require connectivity.
+
 ## What works
 
 - **Automatic and manual routing**: Auto mode considers task type, note length, Private mode, offline state, and the Firebase Remote Config threshold. You can also force **Gemini Nano** or **Gemini 3.5 Flash-Lite** from the model menu.
@@ -13,6 +15,9 @@ A **private-by-default, installable PWA** for AI study notes that routes prompts
 - **Interactive Quiz Me**: Parses generated multiple-choice questions, provides A-D answer controls, grading, explanations, and stores the resulting quiz scores in local statistics.
 - **Study Loop**: Incorrect quiz answers return as review cards the next day. Correct recall spaces the next review at 3, 7, then 14 days; missed reviews return the next day. Schedule and progress are stored with local notes.
 - **Local history and backup**: Notes, title, profile, tour state, and statistics persist in browser `localStorage`. Profile settings offer JSON export and a clear-data action.
+- **Readable exports**: TXT, Markdown, and print/PDF exports include notes, AI responses, quiz answers and explanations, and due review cards.
+- **Routing telemetry opt-out**: Routing telemetry is local and enabled by default. It can be disabled or cleared from Profile settings.
+- **Image OCR**: Tesseract.js extracts printed text locally with an editable confirmation preview; images are not uploaded.
 - **Installable PWA**: Includes a web app manifest, icons, and a service worker cache for the app shell. Firebase Hosting deployment rewrites app routes to `index.html`.
 - **Routing observability**: Displays the selected route, source, latency, privacy summary, and per-run reason. Stats estimate the UTF-8 size of note plus response text handled by on-device runs; they do not measure total network traffic or model-download data.
 
@@ -68,6 +73,7 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
 - Nano availability depends on the browser, device, hardware support, model download state, and Chrome feature rollout. Mobile is treated as unavailable in the current implementation.
 - The PWA can cache the app shell, but remote Firebase responses require connectivity unless Nano is available.
 - The identifier-masking regex runs in JavaScript on the client before the cloud request; it is best-effort, not a substitute for a secure backend policy.
+- OCR data and optional assets must be downloaded once when available. Printed-text OCR is local; handwriting accuracy is limited.
 
 ## Project Structure
 
@@ -76,6 +82,9 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
 - `src/router.js` — Pure routing decision engine
 - `src/main.js` — Chat state, intent detection, prompts, Quiz Me UI, Study Loop, JSON export, and statistics
 - `src/study-loop.js` — Local spaced-review scheduling and due-card selection
+- `src/quiz.js` — Structured quiz schema, validation, and legacy fallback parser
+- `src/vision.js` — Local OCR adapter contract for Tesseract.js
+- `src/model-store.js` — Persistent browser storage and resumable local asset management
 - `src/style.css` — Responsive PWA and Study Loop styling
 - `public/sw.js` — Service worker for app-shell caching
 - `public/manifest.webmanifest` and `public/icon.svg` — PWA metadata and icon
@@ -112,7 +121,7 @@ Thresholds are fetched from Firebase Remote Config with a default of 1,500 chara
    ```bash
    npm test
    ```
-   The test command runs the Node suite for routing and Study Loop behavior, plus Playwright UI checks for settings navigation, telemetry, and the mobile drawer.
+   The test command runs Node suites for routing, Study Loop, structured quizzes, and the OCR adapter, plus Playwright UI checks for settings navigation, telemetry, and the mobile drawer.
 6. Build the production bundle:
    ```bash
    npm run build

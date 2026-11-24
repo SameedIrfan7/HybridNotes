@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tests/router.test.mjs tests/study-loop.test.mjs && npm run test:ui",
+    "test": "node --test tests/router.test.mjs tests/study-loop.test.mjs tests/quiz.test.mjs tests/vision.test.mjs && npm run test:ui",
     "test:ui": "playwright test"
   },
   "devDependencies": {
@@ -16,6 +16,7 @@
     "vite": "^8.3.6"
   },
   "dependencies": {
-    "firebase": "^13.4.0"
+    "firebase": "^13.4.0",
+    "tesseract.js": "^7.0.0"
   }
 }

@@ -1,5 +1,10 @@
-const CACHE_NAME = "hybridnotes-v2";
-const SHELL_ASSETS = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
+const CACHE_NAME = "hybridnotes-v3";
+const SHELL_ASSETS = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/icon.svg",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -25,6 +30,11 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request).catch(() => caches.match("/index.html")));
+    return;
+  }
+  if (url.pathname.startsWith("/firestore") || url.pathname.startsWith("/firebase")) return;
 
   event.respondWith(
     fetch(event.request)
