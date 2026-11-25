@@ -14,6 +14,7 @@ import {
   fetchAndActivate,
   getNumber,
 } from "firebase/remote-config";
+import { QUIZ_RESPONSE_SCHEMA } from "./quiz.js";
 
 const firebaseConfig = {
   apiKey: import.meta.env?.VITE_FIREBASE_API_KEY,
@@ -59,15 +60,34 @@ try {
  * @returns {Promise<number>}
  */
 export async function getMaxOnDeviceChars() {
-  if (!remoteConfig) return 1500;
+  const cacheKey = "hybridnotes_on_device_max_chars";
+  const timestampKey = "hybridnotes_on_device_max_chars_updated";
+  const readCached = () => {
+    try {
+      const cached = Number(localStorage.getItem(cacheKey));
+      const timestamp = Number(localStorage.getItem(timestampKey));
+      return cached > 0 && Number.isFinite(timestamp) ? cached : null;
+    } catch {
+      return null;
+    }
+  };
+  const cached = readCached();
+  if (!remoteConfig) return cached || 1500;
   try {
     if (navigator.onLine) {
       await fetchAndActivate(remoteConfig);
     }
     const value = getNumber(remoteConfig, "on_device_max_chars");
-    return value > 0 ? value : 1500;
+    if (value > 0) {
+      try {
+        localStorage.setItem(cacheKey, String(value));
+        localStorage.setItem(timestampKey, String(Date.now()));
+      } catch {}
+      return value;
+    }
+    return cached || 1500;
   } catch {
-    return 1500;
+    return cached || 1500;
   }
 }
 
@@ -317,7 +337,7 @@ async function createMultimodalNanoSession() {
   });
 }
 
-async function runNativeOnDevice(prompt, image, signal, onDownloadProgress, onStatus, onStream) {
+async function runNativeOnDevice(prompt, image, signal, onDownloadProgress, onStatus, onStream, structuredOutput = null) {
   if (typeof LanguageModel === "undefined" || !LanguageModel.create) {
     throw new Error("Chrome LanguageModel API is unavailable.");
   }
@@ -347,8 +367,16 @@ async function runNativeOnDevice(prompt, image, signal, onDownloadProgress, onSt
 
   try {
     onStatus?.("Prompt is being processed on-device by Gemini Nano…");
+    const promptOptions = { signal };
+    if (
+      structuredOutput &&
+      typeof LanguageModel !== "undefined" &&
+      "responseConstraint" in session
+    ) {
+      promptOptions.responseConstraint = structuredOutput;
+    }
     if (typeof session.promptStreaming === "function") {
-      const stream = session.promptStreaming(nanoInput, { signal });
+      const stream = session.promptStreaming(nanoInput, promptOptions);
       let fullText = "";
       let idleTimer = null;
 
@@ -393,7 +421,7 @@ async function runNativeOnDevice(prompt, image, signal, onDownloadProgress, onSt
     }
 
     const text = await withTimeout(
-      raceWithAbort(session.prompt(nanoInput, { signal }), signal),
+      raceWithAbort(session.prompt(nanoInput, promptOptions), signal),
       90_000,
       "On-device generation timed out."
     );
@@ -428,6 +456,7 @@ export async function runAI({
   onStatus,
   onStream,
   signal,
+  structuredOutput = null,
 }) {
   const safePrompt = (prompt || "").trim() || (image ? "Summarize this study image and highlight key concepts." : "");
   if (!safePrompt && !image) {
@@ -442,7 +471,15 @@ export async function runAI({
 
     if (nanoStatus === "available") {
       try {
-        const text = await runNativeOnDevice(safePrompt, image, signal, onDownloadProgress, onStatus, onStream);
+        const text = await runNativeOnDevice(
+          safePrompt,
+          image,
+          signal,
+          onDownloadProgress,
+          onStatus,
+          onStream,
+          structuredOutput
+        );
         return {
           text,
           source: "on-device",
@@ -485,6 +522,19 @@ export async function runAI({
 
   const cloudModel =
     mode === "PREFER_ON_DEVICE" ? models.ONLY_IN_CLOUD : models[mode] || models.ONLY_IN_CLOUD;
+  const effectiveCloudModel =
+    structuredOutput && ai
+      ? getGenerativeModel(ai, {
+          mode: InferenceMode.ONLY_IN_CLOUD,
+          inCloudParams: {
+            model: CLOUD_MODEL,
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: structuredOutput,
+            },
+          },
+        })
+      : cloudModel;
 
   try {
     onStatus?.("Thinking & compiling response on Cloud Flash-Lite…");
@@ -493,7 +543,7 @@ export async function runAI({
       ? [clean.sanitizedText, { inlineData: { data: image.base64, mimeType: image.mimeType || "image/png" } }]
       : clean.sanitizedText;
     const result = await withTimeout(
-      raceWithAbort(cloudModel.generateContent(cloudPayload), signal),
+      raceWithAbort(effectiveCloudModel.generateContent(cloudPayload), signal),
       30_000,
       "Cloud request timed out. Please check your connection and try again."
     );

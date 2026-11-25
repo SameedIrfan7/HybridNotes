@@ -16,6 +16,13 @@ import {
   recordReviewOutcome,
   scheduleMissedQuizItem,
 } from "./study-loop.js";
+import {
+  QUIZ_RESPONSE_SCHEMA,
+  parseQuizJson,
+  parseLegacyQuizText,
+} from "./quiz.js";
+import { extractText } from "./vision.js";
+import { getStorageInfo, requestPersistentStorage } from "./model-store.js";
 
 const NOTES_KEY = "hybridnotes_notes";
 const STATS_KEY = "hybridnotes_stats";
@@ -49,6 +56,7 @@ const DEFAULT_PROFILE = {
   name: "Student",
   focus: "",
   defaultPrivate: false,
+  routingTelemetry: true,
 };
 const DEFAULT_TITLE = "Untitled note";
 
@@ -190,6 +198,7 @@ const settingsAvatarInitials = document.getElementById("settings-avatar-initials
 const profileNameInput = document.getElementById("profile-name-input");
 const profileFocusInput = document.getElementById("profile-focus-input");
 const profileDefaultPrivate = document.getElementById("profile-default-private");
+const profileRoutingTelemetry = document.getElementById("profile-routing-telemetry");
 const profileQuotaSummary = document.getElementById("profile-quota-summary");
 const profileChatsCount = document.getElementById("profile-chats-count");
 const profileQuotaBar = document.getElementById("profile-quota-bar");
@@ -551,6 +560,7 @@ function saveStats() {
 }
 
 function recordStat(source, ms, estimatedTextBytes = 0, maskedCount = 0) {
+  if (!profile.routingTelemetry) return;
   if (source === "on-device") {
     stats.onDeviceCount += 1;
     stats.onDeviceTotalMs += ms;
@@ -566,6 +576,9 @@ function recordStat(source, ms, estimatedTextBytes = 0, maskedCount = 0) {
 }
 
 function renderStats() {
+  if (profile.routingTelemetry === false) {
+    stats = { ...DEFAULT_STATS };
+  }
   const total = stats.onDeviceCount + stats.cloudCount;
   const onPct = total ? Math.round((stats.onDeviceCount / total) * 100) : 0;
   const cloudPct = total ? 100 - onPct : 0;
@@ -1412,6 +1425,30 @@ function updateOfflineBanner() {
   offlineBanner.hidden = !isAppOffline();
 }
 
+const offlineReadinessModal = document.getElementById("offline-readiness-modal");
+const offlineReadinessOpen = document.getElementById("offline-readiness-open");
+const offlineReadinessClose = document.getElementById("offline-readiness-close");
+
+offlineReadinessOpen?.addEventListener("click", async () => {
+  const modal = offlineReadinessModal;
+  if (!modal) return;
+  modal.showModal();
+  const status = await getOnDeviceStatus();
+  document.getElementById("offline-nano-status").textContent =
+    status === "available" ? "Ready" : status === "downloadable" ? "Downloadable" : status;
+  const storage = await getStorageInfo();
+  await requestPersistentStorage();
+  const refreshed = await getStorageInfo();
+  const fmt = (bytes) => bytes ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : "0 MB";
+  document.getElementById("offline-storage-summary").textContent =
+    `${fmt(refreshed.usage)} used · ${fmt(refreshed.quota)} quota · ${refreshed.persisted ? "persistent" : "not persistent"}`;
+  document.getElementById("offline-readiness-summary").textContent =
+    isAppOffline()
+      ? "You are offline. Only locally ready components and cached app features are available."
+      : "Review what can continue offline after setup.";
+});
+offlineReadinessClose?.addEventListener("click", () => offlineReadinessModal?.close());
+
 const HYBRIDNOTES_SELF_CONTEXT =
   "You are the assistant inside HybridNotes, a private-by-default hybrid AI study notes PWA. HybridNotes routes supported tasks and Private/Offline notes to on-device Chrome Gemini Nano when available, and routes longer or deep tasks to Cloud Gemini 3.5 Flash-Lite after masking common identifiers locally. All chats, stats, and profiles are stored locally in the user's browser (localStorage).";
 
@@ -1459,7 +1496,7 @@ function buildPrompt(task, text, chat = null) {
       return `${appPrefix}${historyBlock}Summarize these study notes clearly in 3-4 bullet points:\n\n${text}`;
     case "quiz": {
       const sourceMaterial = text.length < 80 && history ? `${history}\n\nRequest: ${text}` : text;
-      return `Create 3-4 multiple-choice quiz questions based ONLY on the study material below. Return ONLY a valid JSON array with no markdown or extra text, using this exact schema: [{"q":"Question text?","options":["Option A","Option B","Option C","Option D"],"answerIndex":0,"explanation":"Short 1-sentence explanation."}]\n\nMaterial:\n${sourceMaterial}`;
+      return `Create 3-4 multiple-choice quiz questions based ONLY on the study material below. Return exactly this JSON shape with no markdown or extra text: {"questions":[{"question":"Question text?","options":["Option A","Option B","Option C","Option D"],"answerIndex":0,"explanation":"Short 1-sentence explanation."}]}\n\nMaterial:\n${sourceMaterial}`;
     }
     case "grammar":
       return `Fix grammar and spelling in these study notes while keeping the meaning:\n\n${text}`;
@@ -1571,29 +1608,16 @@ function renderMarkdownSafe(raw) {
 }
 
 function parseQuizItems(rawText) {
-  try {
-    const cleaned = rawText
-      .trim()
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/```$/i, "")
-      .trim();
-    const start = cleaned.indexOf("[");
-    const end = cleaned.lastIndexOf("]");
-    if (start === -1 || end === -1) return null;
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    const valid = parsed.filter(
-      (item) =>
-        item &&
-        typeof item.q === "string" &&
-        Array.isArray(item.options) &&
-        item.options.length >= 2 &&
-        typeof item.answerIndex === "number"
-    );
-    return valid.length > 0 ? valid : null;
-  } catch {
-    return null;
+  const structured = parseQuizJson(rawText);
+  if (structured) {
+    return structured.map((item) => ({
+      q: item.question,
+      options: item.options,
+      answerIndex: item.answerIndex,
+      explanation: item.explanation,
+    }));
   }
+  return parseLegacyQuizText(rawText);
 }
 
 function setRunning(running, aiMsg = null) {
@@ -1786,7 +1810,7 @@ async function handleRun() {
       const isQuiz = task === "quiz" || (task === "auto" && inferAutoIntent(text) === "quiz");
 
       try {
-        res = await runAI({
+        const runQuizRequest = () => runAI({
           prompt: buildPrompt(task, inputText, chat),
           image: attachment,
           mode: route.mode,
@@ -1796,7 +1820,12 @@ async function handleRun() {
           onDownloadProgress: (pct) => {
             updateLiveStatus(`Downloading Gemini Nano locally: ${pct}%`);
           },
+          structuredOutput: isQuiz ? QUIZ_RESPONSE_SCHEMA : null,
         });
+        res = await runQuizRequest();
+        if (isQuiz && !parseQuizItems(res.text)) {
+          res = await runQuizRequest();
+        }
       } finally {
         if (streamRaf) {
           cancelAnimationFrame(streamRaf);
@@ -2074,7 +2103,7 @@ window.addEventListener("offline", updateOfflineBanner);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }
 
@@ -2276,6 +2305,9 @@ function renderProfile() {
   if (profileDefaultPrivate) {
     profileDefaultPrivate.checked = Boolean(profile.defaultPrivate);
   }
+  if (profileRoutingTelemetry) {
+    profileRoutingTelemetry.checked = profile.routingTelemetry !== false;
+  }
 
   let totalBytes = 0;
   for (const key of [NOTES_KEY, STATS_KEY, PROFILE_KEY, TOUR_KEY]) {
@@ -2346,6 +2378,16 @@ profileFocusInput?.addEventListener("input", () => {
 profileDefaultPrivate?.addEventListener("change", () => {
   profile.defaultPrivate = profileDefaultPrivate.checked;
   saveProfile();
+});
+profileRoutingTelemetry?.addEventListener("change", () => {
+  profile.routingTelemetry = profileRoutingTelemetry.checked;
+  saveProfile();
+  if (!profile.routingTelemetry) {
+    stats = { ...DEFAULT_STATS };
+  }
+  saveStats();
+  renderStats();
+  renderProfile();
 });
 
 chatSearchInput?.addEventListener("input", () => {
@@ -2440,6 +2482,11 @@ const attachmentNameEl = document.getElementById("attachment-name");
 const attachmentRemoveBtn = document.getElementById("attachment-remove-btn");
 const attachFileBtn = document.getElementById("attach-file-btn");
 const attachFileInput = document.getElementById("attach-file-input");
+const ocrModal = document.getElementById("ocr-preview-modal");
+const ocrClose = document.getElementById("ocr-preview-close");
+const ocrText = document.getElementById("ocr-preview-text");
+const ocrConfirm = document.getElementById("ocr-preview-confirm");
+const ocrProgress = document.getElementById("ocr-progress");
 
 function clearPendingAttachment() {
   pendingAttachment = null;
@@ -2473,43 +2520,37 @@ async function handleIncomingFile(file) {
   }
 
   if (file.type.startsWith("image/")) {
-    const resizeToJpeg = (img, maxDim, quality) => {
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.width * scale));
-      canvas.height = Math.max(1, Math.round(img.height * scale));
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", quality);
-    };
-
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = async () => {
-      try {
-        const aiDataUrl = resizeToJpeg(img, 1280, 0.82);
-        const thumbDataUrl = resizeToJpeg(img, 240, 0.7);
-        const base64 = aiDataUrl.includes(",") ? aiDataUrl.split(",")[1] : "";
-        const aiBlob = await (await fetch(aiDataUrl)).blob();
-        pendingAttachment = {
-          name: file.name || "study-image.jpg",
-          mimeType: "image/jpeg",
-          dataUrl: thumbDataUrl,
-          base64,
-          blob: aiBlob,
-        };
-        if (attachmentThumbEl) {
-          attachmentThumbEl.src = thumbDataUrl;
-          attachmentThumbEl.hidden = false;
-        }
-        if (attachmentNameEl) {
-          attachmentNameEl.textContent = `${pendingAttachment.name} (${Math.max(1, Math.round(aiBlob.size / 1024))} KB)`;
-        }
-        if (attachmentPreviewEl) attachmentPreviewEl.hidden = false;
-      } finally {
-        URL.revokeObjectURL(objectUrl);
+    if (ocrModal) ocrModal.showModal();
+    if (ocrText) {
+      ocrText.value = "";
+      ocrText.disabled = true;
+    }
+    if (ocrConfirm) ocrConfirm.disabled = true;
+    if (ocrProgress) {
+      ocrProgress.hidden = false;
+      ocrProgress.value = 0;
+    }
+    try {
+      const result = await extractText(file, {
+        lang: "eng",
+        onProgress: (progress) => {
+          if (ocrProgress) ocrProgress.value = progress;
+        },
+      });
+      if (ocrText) {
+        ocrText.value = result.text || "";
+        ocrText.disabled = false;
       }
-    };
-    img.src = objectUrl;
+      if (ocrConfirm) ocrConfirm.disabled = !(result.text || "").trim();
+    } catch (error) {
+      if (ocrText) {
+        ocrText.value = "";
+        ocrText.disabled = false;
+      }
+      window.alert(error?.message || "Could not read text from this image.");
+    } finally {
+      if (ocrProgress) ocrProgress.hidden = true;
+    }
   }
 }
 
@@ -2519,6 +2560,25 @@ attachFileInput?.addEventListener("change", (e) => {
   if (file) handleIncomingFile(file);
 });
 attachmentRemoveBtn?.addEventListener("click", clearPendingAttachment);
+ocrClose?.addEventListener("click", () => ocrModal?.close());
+ocrModal?.addEventListener("click", (event) => {
+  if (event.target === ocrModal) ocrModal.close();
+});
+ocrConfirm?.addEventListener("click", () => {
+  const extracted = ocrText?.value.trim();
+  if (!extracted) return;
+  const prefix = contentInput.value.trim() ? `${contentInput.value.trim()}\n\n` : "";
+  contentInput.value = `${prefix}${extracted}`;
+  const chat = getActiveNote();
+  if (chat) {
+    chat.draft = contentInput.value;
+    saveNotes();
+  }
+  charCountEl.textContent = `${contentInput.value.trim().length} chars`;
+  autoResizeEditor();
+  ocrModal?.close();
+  contentInput.focus();
+});
 
 editorWrapEl?.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -2562,6 +2622,45 @@ function triggerDownload(filename, content, mimeType) {
   URL.revokeObjectURL(url);
 }
 
+function buildReadableExport(format) {
+  const chat = getActiveNote();
+  const title = chat?.title || "Untitled Study Note";
+  const sections = [format === "md" ? `# ${title}` : title];
+  for (const msg of chat?.messages || []) {
+    if (msg.role === "user") {
+      sections.push(format === "md" ? `## Prompt (${msg.taskLabel || "Note"})\n\n${msg.text || ""}` : `\nPROMPT (${msg.taskLabel || "Note"})\n${msg.text || ""}`);
+    } else if (msg.quizItems?.length) {
+      const heading = format === "md" ? "## Quiz" : "\nQUIZ";
+      sections.push(heading);
+      msg.quizItems.forEach((item, idx) => {
+        const options = (item.options || []).map((option, oIdx) =>
+          format === "md"
+            ? `- ${String.fromCharCode(65 + oIdx)}. ${option}${oIdx === item.answerIndex ? " *(Correct)*" : ""}`
+            : `${String.fromCharCode(65 + oIdx)}. ${option}${oIdx === item.answerIndex ? " (Correct)" : ""}`
+        ).join("\n");
+        sections.push(format === "md"
+          ? `### ${idx + 1}. ${item.q}\n\n${options}\n\n**Explanation:** ${item.explanation || ""}`
+          : `${idx + 1}. ${item.q}\n${options}\nExplanation: ${item.explanation || ""}`);
+      });
+    } else if (msg.text) {
+      sections.push(format === "md"
+        ? `## Response (${msg.badgeText || "AI"})\n\n${msg.text}`
+        : `\nRESPONSE (${msg.badgeText || "AI"})\n${msg.text}`);
+    }
+  }
+  const due = getDueStudyLoopItems(notes);
+  if (due.length) {
+    sections.push(format === "md" ? "## Due Review Cards" : "\nDUE REVIEW CARDS");
+    due.forEach((entry, idx) => {
+      const item = entry.item;
+      sections.push(format === "md"
+        ? `### ${idx + 1}. ${item.q}\n\n**Answer:** ${item.options?.[item.answerIndex] || ""}\n\n**Explanation:** ${item.explanation || ""}`
+        : `${idx + 1}. ${item.q}\nAnswer: ${item.options?.[item.answerIndex] || ""}\nExplanation: ${item.explanation || ""}`);
+    });
+  }
+  return sections.join(format === "md" ? "\n\n" : "\n\n");
+}
+
 function safeSlug(title) {
   return (title || "hybridnotes-study")
     .toLowerCase()
@@ -2597,6 +2696,31 @@ document.getElementById("export-md-btn")?.addEventListener("click", () => {
     }
   }
   triggerDownload(`${safeSlug(chat.title)}.md`, lines.join("\n"), "text/markdown;charset=utf-8");
+});
+
+document.getElementById("profile-export-txt-btn")?.addEventListener("click", () => {
+  const chat = getActiveNote();
+  if (!chat) return;
+  triggerDownload(`${safeSlug(chat.title)}.txt`, buildReadableExport("txt"), "text/plain;charset=utf-8");
+});
+
+document.getElementById("profile-export-md-btn")?.addEventListener("click", () => {
+  const chat = getActiveNote();
+  if (!chat) return;
+  triggerDownload(`${safeSlug(chat.title)}.md`, buildReadableExport("md"), "text/markdown;charset=utf-8");
+});
+
+document.getElementById("profile-export-pdf-btn")?.addEventListener("click", () => {
+  const chat = getActiveNote();
+  if (!chat) return;
+  const printArea = document.getElementById("hn-print-area");
+  if (!printArea) return;
+  printArea.innerHTML = escapeHtml(buildReadableExport("txt"))
+    .replace(/^(.+)$/gm, "<p>$1</p>")
+    .replace(/<p><\/p>/g, "");
+  printArea.hidden = false;
+  window.print();
+  printArea.hidden = true;
 });
 
 function exportAnkiFromQuizItems(items, filename) {
